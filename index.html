@@ -112,28 +112,45 @@
         </div>
     </section>
 
-    <!-- THREE BRAND BANNERS -->
-    <section style="padding: 60px 0;" class="animate-fade">
-        <div class="banners-grid">
-            <div class="banner-card" onclick="setCatalogBrand('Puro')">
-                <img src="assets/puro_sneakers.png" alt="PURO Coleccion">
-                <div class="banner-card-overlay">
-                    <h3 class="banner-card-title">PURO</h3>
-                    <span class="banner-card-link">ver más</span>
+    <!-- MULTI-BRAND CATEGORIES BANNERS -->
+    <section class="brand-banners-section animate-fade">
+        <div class="brand-banners-container">
+            <!-- Left Column: PURO (Big vertical banner) -->
+            <div class="brand-col-left">
+                <div class="textbanner big-banner" onclick="setCatalogBrand('Puro')">
+                    <img src="assets/banner_puro.webp" class="banner-img" alt="PURO">
+                    <div class="textbanner-text">
+                        <h3 class="textbanner-title">PURO</h3>
+                        <span class="btn-line">ver más</span>
+                    </div>
                 </div>
             </div>
-            <div class="banner-card" onclick="setCatalogBrand('Antonia Agosti')">
-                <img src="assets/agosti_bag.png" alt="Antonia Agosti">
-                <div class="banner-card-overlay">
-                    <h3 class="banner-card-title">Antonia Agosti</h3>
-                    <span class="banner-card-link">ver más</span>
+            <!-- Right Column: Split layout -->
+            <div class="brand-col-right">
+                <!-- Top Row: Antonia Agosti (Wide banner) -->
+                <div class="textbanner wide-banner" onclick="setCatalogBrand('Antonia Agosti')">
+                    <img src="assets/banner_agosti.webp" class="banner-img" alt="Antonia Agosti">
+                    <div class="textbanner-text">
+                        <h3 class="textbanner-title">Antonia Agosti</h3>
+                        <span class="btn-line">ver más</span>
+                    </div>
                 </div>
-            </div>
-            <div class="banner-card" onclick="setCatalogBrand('Winndia')">
-                <img src="assets/winndia_boots.png" alt="Winndia">
-                <div class="banner-card-overlay">
-                    <h3 class="banner-card-title">Winndia</h3>
-                    <span class="banner-card-link">ver más</span>
+                <!-- Bottom Row: Split columns -->
+                <div class="brand-row-split">
+                    <div class="textbanner square-banner" onclick="setCatalogBrand('Chimmy Churry')">
+                        <img src="assets/banner_chimmy.webp" class="banner-img" alt="Chimmy Churry">
+                        <div class="textbanner-text">
+                            <h3 class="textbanner-title" style="font-size: 16px;">Chimmy Churry</h3>
+                            <span class="btn-line">ver más</span>
+                        </div>
+                    </div>
+                    <div class="textbanner square-banner" onclick="setCatalogBrand('Winndia')">
+                        <img src="assets/banner_winndia.webp" class="banner-img" alt="Winndia">
+                        <div class="textbanner-text">
+                            <h3 class="textbanner-title" style="font-size: 16px;">Winndia</h3>
+                            <span class="btn-line">ver más</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
