@@ -1096,12 +1096,12 @@ footer {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(rgba(0,0,0,0.05), rgba(255, 255, 255, 0.9));
+    background: linear-gradient(rgba(0,0,0,0.1), rgba(0, 0, 0, 0.8));
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     padding: 30px;
-    color: var(--main-foreground);
+    color: #ffffff;
     transition: var(--transition-smooth);
 }
 
