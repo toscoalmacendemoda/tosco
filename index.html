@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOSCO | Almacén de Moda</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome icons for clean modern layout -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- PROMOTIONAL SCROLLING BAR -->
+    <div class="promo-bar">
+        <div class="promo-track">
+            <span class="promo-item">-3 CUOTAS SIN INTERÉS-</span>
+            <span class="promo-item">ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
+            <span class="promo-item">-3 CUOTAS SIN INTERÉS-</span>
+            <span class="promo-item">ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
+            <span class="promo-item">-3 CUOTAS SIN INTERÉS-</span>
+            <span class="promo-item">ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
+            <span class="promo-item">-3 CUOTAS SIN INTERÉS-</span>
+            <span class="promo-item">ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
+            <span class="promo-item">-3 CUOTAS SIN INTERÉS-</span>
+            <span class="promo-item">ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header id="main-header">
+        <div class="header-container">
+            <!-- Navigation Links (Desktop Mega Menu) -->
+            <nav class="nav-desktop">
+                <div class="nav-item">
+                    Calzado <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>
+                    <div class="nav-dropdown">
+                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('zapatillas')">Zapatillas</a>
+                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('sandalias')">Sandalias</a>
+                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('botas')">Botas y Borcegos</a>
+                    </div>
+                </div>
+                <div class="nav-item">
+                    Bolsos y Mochilas <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>
+                    <div class="nav-dropdown">
+                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('bandoleras')">Bandoleras</a>
+                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('carteras')">Carteras</a>
+                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('mochilas')">Mochilas</a>
+                    </div>
+                </div>
+                <div class="nav-item">
+                    Accesorios <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>
+                    <div class="nav-dropdown">
+                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('billeteras')">Billeteras</a>
+                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('rinoneras')">Riñoneras</a>
+                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('llaveros')">Llaveros</a>
+                    </div>
+                </div>
+                <div class="nav-item">
+                    Marcas <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>
+                    <div class="nav-dropdown">
+                        <a href="#" class="dropdown-link" onclick="setCatalogBrand('Puro')">Puro</a>
+                        <a href="#" class="dropdown-link" onclick="setCatalogBrand('Antonia Agosti')">Antonia Agosti</a>
+                        <a href="#" class="dropdown-link" onclick="setCatalogBrand('Winndia')">Winndia</a>
+                    </div>
+                </div>
+                <a href="#" class="nav-item" onclick="setCatalogFilter('terra')">Terra</a>
+            </nav>
+
+            <!-- Store Logo (Tosco Serif Style) -->
+            <div class="logo">
+                <a href="/">TOSCO</a>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="header-actions">
+                <button class="action-btn" id="search-toggle" aria-label="Buscador">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <a href="#" class="action-btn" aria-label="Perfil">
+                    <i class="fa-regular fa-user"></i>
+                </a>
+                <button class="action-btn" id="cart-toggle" aria-label="Carrito de compras">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-count" id="cart-counter">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- SEARCH DYNAMIC INPUT -->
+    <div id="search-box" style="display: none; padding: 15px; border-bottom: 1px solid var(--gray-medium); background: white;">
+        <div style="max-width: 600px; margin: 0 auto; display: flex; gap: 10px;">
+            <input type="text" id="search-input" placeholder="Buscar productos..." style="flex: 1; padding: 12px; border: 1px solid var(--gray-medium); outline: none; font-family: var(--body-font); color: var(--main-foreground);">
+            <button id="search-btn" class="btn-premium" style="padding: 10px 20px;">Buscar</button>
+        </div>
+    </div>
+
+    <!-- HERO HOME SLIDER -->
+    <section class="hero">
+        <div class="hero-slide" style="background-image: url('assets/hero_tosco.png');">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <p class="hero-subtitle">Nueva Colección 2026</p>
+                <h1 class="hero-title">TOSCO ALMACÉN DE MODA</h1>
+                <button class="btn-premium" onclick="scrollToCatalog()">Ver Catálogo</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- THREE BRAND BANNERS -->
+    <section style="padding: 60px 0;">
+        <div class="banners-grid">
+            <div class="banner-card" onclick="setCatalogBrand('Puro')">
+                <img src="assets/puro_sneakers.png" alt="PURO Coleccion">
+                <div class="banner-card-overlay">
+                    <h3 class="banner-card-title">PURO</h3>
+                    <span class="banner-card-link">ver más</span>
+                </div>
+            </div>
+            <div class="banner-card" onclick="setCatalogBrand('Antonia Agosti')">
+                <img src="assets/agosti_bag.png" alt="Antonia Agosti">
+                <div class="banner-card-overlay">
+                    <h3 class="banner-card-title">Antonia Agosti</h3>
+                    <span class="banner-card-link">ver más</span>
+                </div>
+            </div>
+            <div class="banner-card" onclick="setCatalogBrand('Winndia')">
+                <img src="assets/winndia_boots.png" alt="Winndia">
+                <div class="banner-card-overlay">
+                    <h3 class="banner-card-title">Winndia</h3>
+                    <span class="banner-card-link">ver más</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRODUCT DISPLAY SECTION -->
+    <section id="catalog-section" style="padding-bottom: 80px;">
+        <h2 class="section-title">Indumentaria y Más</h2>
+        
+        <div class="products-container">
+            <!-- Filters list -->
+            <div class="catalog-filter">
+                <button class="filter-btn active" onclick="setCatalogFilter('all')">Todos</button>
+                <button class="filter-btn" onclick="setCatalogFilter('calzado')">Calzado</button>
+                <button class="filter-btn" onclick="setCatalogFilter('bolsos-y-mochilas')">Bolsos y Mochilas</button>
+                <button class="filter-btn" onclick="setCatalogFilter('accesorios')">Accesorios</button>
+                <button class="filter-btn" onclick="setCatalogFilter('indumentaria')">Indumentaria</button>
+                <button class="filter-btn" onclick="setCatalogFilter('terra')">Terra</button>
+            </div>
+
+            <!-- Dynamic Product Grid -->
+            <div class="products-grid" id="products-grid">
+                <!-- Loaded via JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- DRAWER OVERLAY -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- CART SIDEBAR DRAWER -->
+    <div class="drawer" id="cart-drawer">
+        <div class="drawer-header">
+            <h3 class="drawer-title">Carrito de Compras</h3>
+            <button class="drawer-close" id="cart-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-content" id="cart-items-container">
+            <!-- Loaded via JS -->
+        </div>
+        <div class="cart-summary">
+            <div class="summary-row">
+                <span>Envío Gratis</span>
+                <span id="shipping-status">Calculando...</span>
+            </div>
+            <div class="shipping-bar-container">
+                <div class="shipping-bar" id="shipping-progress"></div>
+            </div>
+            <p class="shipping-text" id="shipping-hint"></p>
+            
+            <div class="summary-row total" style="margin-top: 15px;">
+                <span>Total:</span>
+                <span id="cart-total">$0</span>
+            </div>
+            <button class="btn-premium" style="width: 100%;" onclick="checkoutAlert()">Iniciar Compra</button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h4 class="footer-column-title">TOSCO ALMACÉN DE MODA</h4>
+                <p style="font-size: 13px; color: var(--main-foreground); margin-bottom: 15px; font-weight: 500;">
+                    Comprá productos de Indumentaria y accesorios por internet de forma segura.
+                </p>
+                <div style="display: flex; gap: 15px; font-size: 18px;">
+                    <a href="https://instagram.com/toscoalmacendemoda" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://facebook.com/toscoalmacendemoda" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://wa.me/message/DXTDZF2YPHOVF1" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+                </div>
+            </div>
+            <div>
+                <h4 class="footer-column-title">Menú</h4>
+                <ul class="footer-links">
+                    <li><a href="#" onclick="setCatalogFilter('all')">Inicio</a></li>
+                    <li><a href="#" onclick="setCatalogFilter('calzado')">Calzado</a></li>
+                    <li><a href="#" onclick="setCatalogFilter('bolsos-y-mochilas')">Bolsos y Mochilas</a></li>
+                    <li><a href="#" onclick="setCatalogFilter('terra')">Colección Terra</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="footer-column-title">Contacto</h4>
+                <ul class="footer-links" style="font-size: 13px;">
+                    <li><i class="fa-solid fa-location-dot" style="margin-right: 8px;"></i> General Paz 2770</li>
+                    <li><i class="fa-regular fa-envelope" style="margin-right: 8px;"></i> info@tosco.com.ar</li>
+                    <li><a href="https://wa.me/message/DXTDZF2YPHOVF1" target="_blank"><i class="fa-brands fa-whatsapp" style="margin-right: 8px;"></i> Escribinos por WhatsApp</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="footer-column-title">Newsletter</h4>
+                <p style="font-size: 12px; margin-bottom: 15px;">¿Querés recibir nuestras novedades? ¡Dejanos tu mail!</p>
+                <form onsubmit="event.preventDefault(); alert('¡Gracias por suscribirte!');" class="newsletter-input-group">
+                    <input type="email" placeholder="Email" required class="newsletter-input">
+                    <button type="submit" class="newsletter-btn">Enviar</button>
+                </form>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div>© Copyright TOSCO - 2026. Todos los derechos reservados.</div>
+            <div>Defensa de las y los consumidores.</div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
