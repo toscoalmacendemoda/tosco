@@ -605,7 +605,7 @@ function renderProducts() {
     productsGrid.innerHTML = '';
     
     // Filtering logic cascade
-    let filtered = ALL_PRODUCTS;
+    let filtered = ALL_PRODUCTS.filter(p => p.stock === undefined || p.stock > 0);
     
     if (activeCategory !== 'all') {
         filtered = filtered.filter(p => p.category === activeCategory);
