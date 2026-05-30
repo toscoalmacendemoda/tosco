@@ -664,7 +664,12 @@ function updateAdminStats() {
     const outOfStockCount = ALL_PRODUCTS.filter(p => p.stock === 0).length;
     statOutOfStockEl.innerText = outOfStockCount;
     
-    const salesTotal = parseFloat(localStorage.getItem('tosco_monthly_sales')) || 389200;
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const salesTotal = ALL_ORDERS
+        .filter(o => o.status === 'Completado' && new Date(o.date).getMonth() === currentMonth && new Date(o.date).getFullYear() === currentYear)
+        .reduce((sum, o) => sum + (o.total || 0), 0);
     statSalesEl.innerText = `$${salesTotal.toLocaleString('es-AR')}`;
     
     const freeShippingCount = ALL_PRODUCTS.filter(p => p.labels.some(l => l.toLowerCase().includes('gratis') || l.toLowerCase().includes('envío'))).length;
