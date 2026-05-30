@@ -747,23 +747,26 @@ function renderOrdersTable() {
 
         const itemsSummary = o.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
 
-        let statusBadge = '';
+        let statusBadge = `
+            <select class="admin-status-select" onchange="updateOrderStatus(${o.id}, this.value)" style="padding: 6px 10px; border-radius: 4px; border: 1px solid var(--gray-medium); font-weight: bold; font-family: var(--body-font); background-color: ${o.status === 'Pendiente' ? '#fef5e7' : o.status === 'Activo' ? '#ebf5fb' : '#e8f8f5'}; color: ${o.status === 'Pendiente' ? '#d35400' : o.status === 'Activo' ? '#2980b9' : '#27ae60'}; cursor: pointer; outline: none;">
+                <option value="Pendiente" ${o.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                <option value="Activo" ${o.status === 'Activo' ? 'selected' : ''}>Despachado</option>
+                <option value="Completado" ${o.status === 'Completado' ? 'selected' : ''}>Completado</option>
+            </select>
+        `;
         let actionBtnHtml = '';
 
         if (o.status === 'Pendiente') {
-            statusBadge = `<span style="background-color:#fef5e7; color:#d35400; padding:5px 10px; border-radius:4px; font-weight:bold; display:inline-block;"><i class="fa-regular fa-clock"></i> Pendiente</span>`;
             actionBtnHtml = `
                 <button class="btn-table-action" onclick="printShippingLabel(${o.id})" style="background:#34495e; color:white;"><i class="fa-solid fa-print"></i> Etiqueta</button>
                 <button class="btn-table-action" onclick="updateOrderStatus(${o.id}, 'Activo')" style="background:#2980b9; color:white;"><i class="fa-solid fa-truck"></i> Despachar</button>
             `;
         } else if (o.status === 'Activo') {
-            statusBadge = `<span style="background-color:#ebf5fb; color:#2980b9; padding:5px 10px; border-radius:4px; font-weight:bold; display:inline-block;"><i class="fa-solid fa-shipping-fast"></i> Despachado</span>`;
             actionBtnHtml = `
                 <button class="btn-table-action" onclick="printShippingLabel(${o.id})"><i class="fa-solid fa-print"></i> Etiqueta</button>
                 <button class="btn-table-action" onclick="updateOrderStatus(${o.id}, 'Completado')" style="background:#27ae60; color:white;"><i class="fa-regular fa-circle-check"></i> Entregado</button>
             `;
         } else {
-            statusBadge = `<span style="background-color:#e8f8f5; color:#27ae60; padding:5px 10px; border-radius:4px; font-weight:bold; display:inline-block;"><i class="fa-regular fa-circle-check"></i> Completado</span>`;
             actionBtnHtml = `
                 <button class="btn-table-action delete" onclick="deleteOrder(${o.id})"><i class="fa-regular fa-trash-can"></i> Borrar</button>
             `;
@@ -826,7 +829,7 @@ window.updateOrderStatus = async function(orderId, newStatus) {
     o.status = newStatus;
     await dbPutOrder(o);
     await refreshLocalState();
-    alert(`Pedido #${orderId} actualizado a ${newStatus === 'Activo' ? 'Despachado / Activo' : 'Completado'}.`);
+    alert(`Pedido #${orderId} actualizado a ${newStatus === 'Activo' ? 'Despachado' : newStatus}.`);
 };
 
 window.printShippingLabel = function(orderId) {
