@@ -1003,18 +1003,23 @@ window.openProductDetail = function(productId) {
     let defaultSize = 'Único';
     
     if (p.sizesStock) {
-        const availableSizes = Object.entries(p.sizesStock).filter(([size, stock]) => stock > 0);
-        if (availableSizes.length > 0) {
-            defaultSize = availableSizes[0][0];
+        const allSizes = Object.entries(p.sizesStock);
+        if (allSizes.length > 0) {
+            const firstAvailable = allSizes.find(([size, stock]) => stock > 0);
+            defaultSize = firstAvailable ? firstAvailable[0] : allSizes[0][0];
             sizesHtml = `
                 <div style="margin-top: 15px;">
                     <span id="detail-size-label" style="font-size: 11px; font-weight: 700; display: block; margin-bottom: 6px; color: var(--main-foreground); text-transform: uppercase; letter-spacing: 0.5px;">Talle: ${defaultSize}</span>
-                    <div id="detail-size-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        ${availableSizes.map(([size, stock], idx) => `
-                            <button type="button" class="size-btn ${idx === 0 ? 'active' : ''}" onclick="selectDetailSize(${p.id}, '${size}', this)" style="border: 2px solid ${idx === 0 ? 'var(--main-foreground)' : 'var(--gray-medium)'}; font-weight: ${idx === 0 ? '700' : '400'};">
-                                ${size}
-                            </button>
-                        `).join('')}
+                    <div id="detail-size-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        ${allSizes.map(([size, stock]) => {
+                            const isOutOfStock = stock <= 0;
+                            const isActive = size === defaultSize && !isOutOfStock;
+                            return `
+                                <button type="button" class="size-btn ${isActive ? 'active' : ''} ${isOutOfStock ? 'disabled' : ''}" ${isOutOfStock ? 'disabled' : ''} onclick="selectDetailSize(${p.id}, '${size}', this)">
+                                    ${size}
+                                </button>
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             `;
@@ -1024,9 +1029,9 @@ window.openProductDetail = function(productId) {
         sizesHtml = `
             <div style="margin-top: 15px;">
                 <span id="detail-size-label" style="font-size: 11px; font-weight: 700; display: block; margin-bottom: 6px; color: var(--main-foreground); text-transform: uppercase; letter-spacing: 0.5px;">Talle: ${defaultSize}</span>
-                <div id="detail-size-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <div id="detail-size-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;">
                     ${p.sizes.map((size, idx) => `
-                        <button type="button" class="size-btn ${idx === 0 ? 'active' : ''}" onclick="selectDetailSize(${p.id}, '${size}', this)" style="border: 2px solid ${idx === 0 ? 'var(--main-foreground)' : 'var(--gray-medium)'}; font-weight: ${idx === 0 ? '700' : '400'};">
+                        <button type="button" class="size-btn ${idx === 0 ? 'active' : ''}" onclick="selectDetailSize(${p.id}, '${size}', this)">
                             ${size}
                         </button>
                     `).join('')}

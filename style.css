@@ -1577,3 +1577,41 @@ footer {
     }
 }
 
+/* Product Size Button Selection Styling */
+.size-btn {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border: 1px solid var(--gray-medium);
+    color: var(--main-foreground);
+    font-family: var(--body-font);
+    font-weight: 700;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.size-btn:hover:not(:disabled) {
+    border-color: var(--main-foreground);
+    background-color: var(--gray-light);
+}
+
+.size-btn.active {
+    border: 2px solid var(--main-foreground) !important;
+    background-color: #ffffff;
+    color: var(--main-foreground);
+}
+
+.size-btn:disabled, .size-btn.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background-color: #f7f7f7;
+    border-color: #e5e5e5;
+    color: var(--gray-dark);
+    text-decoration: line-through;
+}
+
