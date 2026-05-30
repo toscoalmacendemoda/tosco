@@ -1007,7 +1007,13 @@ async function handleCheckoutSubmit(e) {
 }
 
 // PRODUCT DETAIL MODAL CONTROLLER
-window.openProductDetail = function(productId) {
+window.openProductDetail = async function(productId) {
+    try {
+        await refreshLocalState();
+    } catch (e) {
+        console.error("Error refreshing state on detail open:", e);
+    }
+    
     const p = ALL_PRODUCTS.find(prod => prod.id === productId);
     if (!p) return;
 
