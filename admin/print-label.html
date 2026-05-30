@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Imprimir Etiqueta de Envío</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #ffffff;
+            color: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        /* Thermal Label 100mm x 150mm */
+        .label-container {
+            width: 400px;
+            border: 3px solid #000000;
+            padding: 15px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+        .header-carrier {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px dashed #000000;
+            padding-bottom: 10px;
+        }
+        .carrier-title {
+            font-size: 24px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .carrier-logo-desc {
+            font-size: 11px;
+            font-weight: bold;
+            background: #000000;
+            color: #ffffff;
+            padding: 4px 8px;
+            text-transform: uppercase;
+        }
+        .address-box {
+            border-bottom: 1px solid #000000;
+            padding-bottom: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .box-title {
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #555555;
+            margin-bottom: 3px;
+        }
+        .destinatario-box {
+            border-bottom: 2px dashed #000000;
+            padding-bottom: 12px;
+            font-size: 15px;
+            line-height: 1.4;
+        }
+        .destinatario-name {
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .barcode-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 15px 0;
+            border-bottom: 1px solid #000000;
+        }
+        /* Simulated CSS Barcode */
+        .barcode-lines {
+            width: 320px;
+            height: 70px;
+            background: repeating-linear-gradient(
+                90deg,
+                #000000,
+                #000000 2px,
+                #ffffff 2px,
+                #ffffff 6px,
+                #000000 6px,
+                #000000 8px,
+                #ffffff 8px,
+                #ffffff 12px,
+                #000000 12px,
+                #000000 13px,
+                #ffffff 13px,
+                #ffffff 16px
+            );
+        }
+        .tracking-code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .no-print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #916b5e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        @media print {
+            .no-print-btn {
+                display: none;
+            }
+            body {
+                padding: 0;
+                background: none;
+            }
+            .label-container {
+                border: 3px solid #000000;
+                width: 100%;
+                max-width: 100%;
+                height: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="no-print-btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir Etiqueta</button>
+
+    <div class="label-container" id="label-content">
+        <div class="header-carrier">
+            <span class="carrier-title" id="lbl-carrier-name">ANDREANI</span>
+            <span class="carrier-logo-desc" id="lbl-carrier-type">EXPRESS</span>
+        </div>
+        
+        <!-- Remitente (Siempre Olavarría) -->
+        <div class="address-box">
+            <div class="box-title">REMITENTE (ORIGEN)</div>
+            <strong>TOSCO ALMACÉN DE MODA</strong><br>
+            General Paz 2770, B7400<br>
+            Olavarría, Buenos Aires<br>
+            Tel: 2284620258
+        </div>
+        
+        <!-- Destinatario (Cliente) -->
+        <div class="destinatario-box">
+            <div class="box-title">DESTINATARIO (DESTINO)</div>
+            <div class="destinatario-name" id="lbl-dest-name">Cargando...</div>
+            <div id="lbl-dest-address">Dirección...</div>
+            <div id="lbl-dest-city-state">Localidad, Provincia</div>
+            <div style="font-weight: bold; margin-top: 5px;">CP: <span id="lbl-dest-zip">0000</span></div>
+            <div style="font-size: 12px; margin-top: 2px;">Tel: <span id="lbl-dest-phone">-</span></div>
+        </div>
+        
+        <!-- Barcode simulation -->
+        <div class="barcode-section">
+            <div class="barcode-lines"></div>
+            <div class="tracking-code" id="lbl-tracking">AR-00000000-00</div>
+        </div>
+
+        <div class="footer-info">
+            <span>BULTOS: 1/1</span>
+            <span id="lbl-order-id">PEDIDO #0000</span>
+            <span id="lbl-date">DD/MM/AAAA</span>
+        </div>
+    </div>
+
+    <script>
+        // Connect to IndexedDB to pull order details
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = parseInt(urlParams.get('orderId'));
+
+        if (!orderId) {
+            alert("No se especificó un ID de pedido válido.");
+        } else {
+            loadOrderDetails(orderId);
+        }
+
+        function loadOrderDetails(id) {
+            const request = indexedDB.open('ToscoStoreDB', 2);
+            
+            request.onsuccess = (e) => {
+                const db = e.target.result;
+                const transaction = db.transaction('orders', 'readonly');
+                const store = transaction.objectStore('orders');
+                const getReq = store.get(id);
+                
+                getReq.onsuccess = () => {
+                    const order = getReq.result;
+                    if (order) {
+                        renderLabel(order);
+                    } else {
+                        alert("Pedido no encontrado.");
+                    }
+                };
+            };
+        }
+
+        function renderLabel(order) {
+            document.title = `Etiqueta Envío - Pedido #${order.id}`;
+            document.getElementById('lbl-carrier-name').innerText = order.carrier;
+            document.getElementById('lbl-carrier-type').innerText = order.carrier === 'Andreani' ? 'Express' : 'Estándar';
+            
+            document.getElementById('lbl-dest-name').innerText = order.customer.name;
+            document.getElementById('lbl-dest-address').innerText = order.customer.address;
+            document.getElementById('lbl-dest-city-state').innerText = `${order.customer.city}, ${order.customer.state}`;
+            document.getElementById('lbl-dest-zip').innerText = order.customer.zip;
+            document.getElementById('lbl-dest-phone').innerText = order.customer.phone;
+
+            // Generate tracking code
+            const prefix = order.carrier === 'Andreani' ? 'AND' : 'COR';
+            document.getElementById('lbl-tracking').innerText = `${prefix}-${String(order.id).padStart(6, '0')}-AR`;
+            
+            document.getElementById('lbl-order-id').innerText = `PEDIDO #${order.id}`;
+            
+            const dateObj = new Date(order.date);
+            document.getElementById('lbl-date').innerText = dateObj.toLocaleDateString('es-AR');
+
+            // Auto print dialog
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
+    </script>
+</body>
+</html>

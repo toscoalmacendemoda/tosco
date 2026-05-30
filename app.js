@@ -237,51 +237,40 @@ const aiMessagesContainer = document.getElementById('ai-messages-container');
 const aiInput = document.getElementById('ai-input');
 const aiSendBtn = document.getElementById('ai-send-btn');
 
-// Admin Panel DOM elements
-const adminPanelLink = document.getElementById('admin-panel-link');
-const adminPanelContainer = document.getElementById('admin-panel-container');
-const adminCloseBtn = document.getElementById('admin-close-btn');
-const adminProductsTbody = document.getElementById('admin-products-tbody');
-const adminSearchInput = document.getElementById('admin-search-input');
-const adminAddProductBtn = document.getElementById('admin-add-product-btn');
-const adminExportBtn = document.getElementById('admin-export-btn');
-const adminImportTrigger = document.getElementById('admin-import-trigger');
-const adminImportFile = document.getElementById('admin-import-file');
-const adminResetBtn = document.getElementById('admin-reset-btn');
+// Client Checkout Modal DOM Elements
+const checkoutModalContainer = document.getElementById('checkout-modal-container');
+const checkoutForm = document.getElementById('checkout-form');
+const checkoutCloseBtn = document.getElementById('checkout-close-btn');
+const checkoutCancelBtn = document.getElementById('checkout-cancel-btn');
+const checkoutSubtotal = document.getElementById('checkout-subtotal');
+const checkoutShipping = document.getElementById('checkout-shipping');
+const checkoutTotal = document.getElementById('checkout-total');
 
-// Admin modal form
-const productModalContainer = document.getElementById('product-modal-container');
-const modalTitle = document.getElementById('modal-title');
-const modalCloseBtn = document.getElementById('modal-close-btn');
-const productForm = document.getElementById('product-form');
-const formProductId = document.getElementById('form-product-id');
-const formName = document.getElementById('form-name');
-const formBrand = document.getElementById('form-brand');
-const formCategory = document.getElementById('form-category');
-const formSubcategory = document.getElementById('form-subcategory');
-const formPrice = document.getElementById('form-price');
-const formOriginalPrice = document.getElementById('form-original-price');
-const formStock = document.getElementById('form-stock');
-const formImage = document.getElementById('form-image');
-const formSizes = document.getElementById('form-sizes');
-const formLabels = document.getElementById('form-labels');
-const formCancelBtn = document.getElementById('form-cancel-btn');
+// ORDER DB CONTROLLER
+function dbPutOrder(order) {
+    return new Promise((resolve) => {
+        const transaction = db.transaction('orders', 'readwrite');
+        const store = transaction.objectStore('orders');
+        const request = store.put(order);
 
-// Admin stats
-const statTotalEl = document.getElementById('admin-stat-total');
-const statOutOfStockEl = document.getElementById('admin-stat-out-of-stock');
-const statSalesEl = document.getElementById('admin-stat-sales');
-const statShippingEl = document.getElementById('admin-stat-shipping');
+        request.onsuccess = () => {
+            resolve(request.result);
+        };
+    });
+}
 
 // INDEXEDDB CONTROLLER
 function dbInit() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open('ToscoStoreDB', 1);
+        const request = indexedDB.open('ToscoStoreDB', 2);
 
         request.onupgradeneeded = (e) => {
             const database = e.target.result;
             if (!database.objectStoreNames.contains('products')) {
                 database.createObjectStore('products', { keyPath: 'id' });
+            }
+            if (!database.objectStoreNames.contains('orders')) {
+                database.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
             }
         };
 
@@ -394,6 +383,7 @@ function setupEventListeners() {
         closeCart();
         closeMobileMenu();
         closeAiChat();
+        closeCheckoutModal();
     });
 
     // AI Chat UI Toggles
@@ -426,6 +416,14 @@ function setupEventListeners() {
         } else {
             header.classList.remove('scrolled');
         }
+    });
+
+    // Client Checkout Modal Listeners
+    checkoutCloseBtn.addEventListener('click', closeCheckoutModal);
+    checkoutCancelBtn.addEventListener('click', closeCheckoutModal);
+    checkoutForm.addEventListener('submit', handleCheckoutSubmit);
+    document.querySelectorAll('input[name="shipping-carrier"]').forEach(radio => {
+        radio.addEventListener('change', updateCheckoutTotals);
     });
 }
 
@@ -742,29 +740,110 @@ function updateShippingProgress(subtotal) {
 }
 
 // Reset cart, save it, update cart UI and refresh database state
-window.checkoutAlert = function() {
+window.openCheckoutModal = function() {
+    checkoutModalContainer.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    updateCheckoutTotals();
+};
+
+window.closeCheckoutModal = function() {
+    checkoutModalContainer.style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+function updateCheckoutTotals() {
     let subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     
-    // Add subtotal to monthly sales in localStorage
-    let monthlySales = parseFloat(localStorage.getItem('tosco_monthly_sales')) || 389200;
-    monthlySales += subtotal;
-    localStorage.setItem('tosco_monthly_sales', monthlySales);
+    // Check if shipping is free (limit $250.000)
+    let shippingCost = 0;
+    const selectedCarrier = document.querySelector('input[name="shipping-carrier"]:checked').value;
     
-    // Discount stock of purchased items
-    const promises = cart.map(async (item) => {
-        const p = ALL_PRODUCTS.find(prod => prod.id === item.id);
-        if (p && p.stock !== undefined) {
-            p.stock = Math.max(0, p.stock - item.quantity);
-            await dbPutProduct(p);
-        }
-    });
+    const isFree = subtotal >= 250000;
+    const andreaniCost = isFree ? 0 : 9500;
+    const correoCost = isFree ? 0 : 7800;
 
-    Promise.all(promises).then(async () => {
-        alert("¡Simulación de compra completada! Gracias por usar nuestro clon de Tosco Almacén de Moda.");
+    document.getElementById('andreani-cost-display').innerText = isFree ? "Gratis" : "$9.500";
+    document.getElementById('correo-cost-display').innerText = isFree ? "Gratis" : "$7.800";
+
+    shippingCost = selectedCarrier === 'Andreani' ? andreaniCost : correoCost;
+
+    checkoutSubtotal.innerText = `$${subtotal.toLocaleString('es-AR')}`;
+    checkoutShipping.innerText = shippingCost === 0 ? "Gratis" : `$${shippingCost.toLocaleString('es-AR')}`;
+    checkoutTotal.innerText = `$${(subtotal + shippingCost).toLocaleString('es-AR')}`;
+}
+
+window.checkoutAlert = function() {
+    if (cart.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
+    closeCart();
+    openCheckoutModal();
+};
+
+async function handleCheckoutSubmit(e) {
+    e.preventDefault();
+    
+    const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const selectedCarrier = document.querySelector('input[name="shipping-carrier"]:checked').value;
+    const isFree = subtotal >= 250000;
+    const shippingCost = isFree ? 0 : (selectedCarrier === 'Andreani' ? 9500 : 7800);
+    
+    const orderData = {
+        date: new Date().toISOString(),
+        status: "Pendiente",
+        customer: {
+            name: document.getElementById('checkout-name').value.trim(),
+            phone: document.getElementById('checkout-phone').value.trim(),
+            email: document.getElementById('checkout-email').value.trim(),
+            state: document.getElementById('checkout-state').value.trim(),
+            city: document.getElementById('checkout-city').value.trim(),
+            address: document.getElementById('checkout-address').value.trim(),
+            zip: document.getElementById('checkout-zip').value.trim()
+        },
+        carrier: selectedCarrier,
+        shippingCost: shippingCost,
+        subtotal: subtotal,
+        total: subtotal + shippingCost,
+        items: cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image
+        }))
+    };
+
+    try {
+        // Save order to IndexedDB
+        await dbPutOrder(orderData);
+        
+        // Subtract stock for each product
+        const promises = cart.map(async (item) => {
+            const p = ALL_PRODUCTS.find(prod => prod.id === item.id);
+            if (p && p.stock !== undefined) {
+                p.stock = Math.max(0, p.stock - item.quantity);
+                await dbPutProduct(p);
+            }
+        });
+        
+        await Promise.all(promises);
+
+        // Update monthly sales in localStorage
+        let monthlySales = parseFloat(localStorage.getItem('tosco_monthly_sales')) || 389200;
+        monthlySales += subtotal;
+        localStorage.setItem('tosco_monthly_sales', monthlySales);
+
+        alert(`¡Pedido realizado con éxito! Su pedido se ha registrado con el método de envío: ${selectedCarrier}.`);
+        
+        // Clean cart and reload
         cart = [];
         saveCart();
         updateCartUI();
-        closeCart();
+        closeCheckoutModal();
         await refreshLocalState();
-    });
-};
+    } catch (err) {
+        console.error("Error creating order: ", err);
+        alert("Ocurrió un error al procesar la compra.");
+    }
+}

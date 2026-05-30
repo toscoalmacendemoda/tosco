@@ -109,80 +109,121 @@
                 </div>
             </div>
             
-            <div class="admin-content">
-                <!-- Summary Stats Bar -->
-                <div class="admin-stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fa-solid fa-box-open"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">Total Productos</span>
-                            <span class="stat-value" id="admin-stat-total">0</span>
+            <!-- Admin Tabs Navigation -->
+            <div style="display:flex; gap:10px; background:#ffffff; padding:10px 25px; border-bottom:1px solid var(--gray-medium);">
+                <button class="btn-admin-action primary" id="tab-products-btn" style="border-radius:4px;"><i class="fa-solid fa-box"></i> Productos</button>
+                <button class="btn-admin-action" id="tab-orders-btn" style="border-radius:4px;"><i class="fa-solid fa-receipt"></i> Pedidos y Envíos</button>
+            </div>
+            
+            <div class="admin-content" style="flex:1; overflow-y:auto;">
+                <!-- PRODUCTS VIEW TAB PANE -->
+                <div id="tab-products-pane" style="display:flex; flex-direction:column; gap:20px;">
+                    <!-- Summary Stats Bar -->
+                    <div class="admin-stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fa-solid fa-box-open"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Total Productos</span>
+                                <span class="stat-value" id="admin-stat-total">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Sin Stock</span>
+                                <span class="stat-value" id="admin-stat-out-of-stock" style="color: #c0392b;">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Ventas del Mes</span>
+                                <span class="stat-value" id="admin-stat-sales">$389.200</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Con Envío Gratis</span>
+                                <span class="stat-value" id="admin-stat-shipping">0</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">Sin Stock</span>
-                            <span class="stat-value" id="admin-stat-out-of-stock" style="color: #c0392b;">0</span>
+
+                    <!-- Action Controls Bar -->
+                    <div class="admin-actions-bar">
+                        <div class="admin-search-wrapper">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="admin-search-input" placeholder="Buscar por nombre o marca...">
+                        </div>
+                        <div class="admin-buttons-group">
+                            <button class="btn-admin-action primary" id="admin-add-product-btn">
+                                <i class="fa-solid fa-plus"></i> Nuevo Producto
+                            </button>
+                            <button class="btn-admin-action" id="admin-export-btn" title="Exportar Catálogo JSON">
+                                <i class="fa-solid fa-download"></i> Exportar
+                            </button>
+                            <button class="btn-admin-action" id="admin-import-trigger" title="Importar Catálogo JSON">
+                                <i class="fa-solid fa-upload"></i> Importar
+                            </button>
+                            <input type="file" id="admin-import-file" style="display: none;" accept=".json">
+                            <button class="btn-admin-action danger" id="admin-reset-btn" title="Restaurar valores de fábrica">
+                                <i class="fa-solid fa-arrow-rotate-left"></i> Restablecer
+                            </button>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">Ventas del Mes</span>
-                            <span class="stat-value" id="admin-stat-sales">$389.200</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fa-solid fa-truck-ramp-box"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">Con Envío Gratis</span>
-                            <span class="stat-value" id="admin-stat-shipping">0</span>
-                        </div>
+
+                    <!-- Products Table -->
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Foto</th>
+                                    <th>Nombre</th>
+                                    <th>Marca / Sección</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Etiquetas</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-products-tbody">
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <!-- Action Controls Bar -->
-                <div class="admin-actions-bar">
-                    <div class="admin-search-wrapper">
-                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                        <input type="text" id="admin-search-input" placeholder="Buscar por nombre o marca...">
+                <!-- ORDERS VIEW TAB PANE -->
+                <div id="tab-orders-pane" style="display:none; flex-direction:column; gap:20px;">
+                    <!-- Orders Status Filter Tabs -->
+                    <div style="display:flex; gap:10px; background:#ffffff; padding:15px; border-radius:6px; border:1px solid var(--gray-medium);">
+                        <button class="btn-admin-action primary" id="order-filter-all" style="padding: 8px 15px;">Todos</button>
+                        <button class="btn-admin-action" id="order-filter-pending" style="padding: 8px 15px;"><i class="fa-regular fa-clock" style="color:#d35400;"></i> Pendientes</button>
+                        <button class="btn-admin-action" id="order-filter-active" style="padding: 8px 15px;"><i class="fa-solid fa-truck" style="color:#2980b9;"></i> Despachados / Activos</button>
+                        <button class="btn-admin-action" id="order-filter-completed" style="padding: 8px 15px;"><i class="fa-regular fa-circle-check" style="color:#27ae60;"></i> Completados</button>
                     </div>
-                    <div class="admin-buttons-group">
-                        <button class="btn-admin-action primary" id="admin-add-product-btn">
-                            <i class="fa-solid fa-plus"></i> Nuevo Producto
-                        </button>
-                        <button class="btn-admin-action" id="admin-export-btn" title="Exportar Catálogo JSON">
-                            <i class="fa-solid fa-download"></i> Exportar
-                        </button>
-                        <button class="btn-admin-action" id="admin-import-trigger" title="Importar Catálogo JSON">
-                            <i class="fa-solid fa-upload"></i> Importar
-                        </button>
-                        <input type="file" id="admin-import-file" style="display: none;" accept=".json">
-                        <button class="btn-admin-action danger" id="admin-reset-btn" title="Restaurar valores de fábrica">
-                            <i class="fa-solid fa-arrow-rotate-left"></i> Restablecer
-                        </button>
-                    </div>
-                </div>
 
-                <!-- Products Table -->
-                <div class="admin-table-container">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Foto</th>
-                                <th>Nombre</th>
-                                <th>Marca / Sección</th>
-                                <th>Precio</th>
-                                <th>Stock</th>
-                                <th>Etiquetas</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-products-tbody">
-                            <!-- Loaded via JS -->
-                        </tbody>
-                    </table>
+                    <!-- Orders Table -->
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Pedido</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente y Destino</th>
+                                    <th>Método Envío</th>
+                                    <th>Artículos</th>
+                                    <th>Total Cobrado</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-orders-tbody">
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
