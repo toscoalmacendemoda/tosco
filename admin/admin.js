@@ -1,83 +1,6 @@
 // INITIAL SEED DATABASE (FOR DATABASE RESET ACTION)
 const INITIAL_PRODUCTS = [
     {
-        id: 1,
-        name: "Zapatillas Puro Art",
-        brand: "Puro",
-        category: "calzado",
-        subcategory: "zapatillas",
-        price: 135000,
-        originalPrice: 168750,
-        image: "../assets/puro_sneakers.png",
-        labels: ["3 cuotas sin interés", "Envío gratis", "20% OFF"],
-        sizes: [36, 37, 38, 39, 40],
-        stock: 12
-    },
-    {
-        id: 2,
-        name: "Cartera Agosti Mandala",
-        brand: "Antonia Agosti",
-        category: "bolsos-y-mochilas",
-        subcategory: "carteras",
-        price: 168900,
-        image: "../assets/agosti_bag.png",
-        labels: ["Cuotas sin interés", "New In!"],
-        sizes: ["Único"],
-        stock: 5
-    },
-    {
-        id: 3,
-        name: "Borcegos Winndia Vintage",
-        brand: "Winndia",
-        category: "calzado",
-        subcategory: "botas",
-        price: 145600,
-        originalPrice: 182000,
-        image: "../assets/winndia_boots.png",
-        labels: ["Envío gratis", "20% OFF"],
-        sizes: [36, 37, 38, 39],
-        stock: 8
-    },
-    {
-        id: 182601807,
-        name: "Zapatillas Ochenta y Seis - Puro",
-        brand: "Puro",
-        category: "calzado",
-        subcategory: "zapatillas",
-        price: 105900,
-        originalPrice: null,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/11-bb2a2b9b9e3c0143cf16700173306641-640-01-6d8e37f72f9d68374316941804911202-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "Envío gratis"],
-        sizes: [36, 37, 38, 39, 40],
-        stock: 15
-    },
-    {
-        id: 251443813,
-        name: "Zapatillas Puro Yogui Sincronia - Puro",
-        brand: "Puro",
-        category: "calzado",
-        subcategory: "zapatillas",
-        price: 139000,
-        originalPrice: null,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/458194e0-4d0d-42c1-ac00-dbb9c9c738dc-169bf15d0af1b298e817374713176465-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "Envío gratis"],
-        sizes: [36, 37, 38, 39, 40],
-        stock: 6
-    },
-    {
-        id: 218644172,
-        name: "Zapatilla Retro Flow Indonesia - Puro",
-        brand: "Puro",
-        category: "calzado",
-        subcategory: "zapatillas",
-        price: 189000,
-        originalPrice: null,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/462538177_1008224831062341_6245104394471684021_n-195da95026544d346217301480909692-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "Envío gratis"],
-        sizes: [36, 37, 38, 39, 40],
-        stock: 10
-    },
-    {
         id: 182611440,
         name: "Botas Chavo del Diecisiete - Puro",
         brand: "Puro",
@@ -88,111 +11,14 @@ const INITIAL_PRODUCTS = [
         image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/31-534d33010b1888d6c116700173309147-640-01-a9f3393ebd1b1c8b5816941804912526-1024-1024.webp",
         labels: ["3 cuotas sin interés", "67% OFF"],
         sizes: [36, 37, 38, 39, 40],
-        stock: 0
-    },
-    {
-        id: 260949996,
-        name: "Llavero Clap Ambar - Puro",
-        brand: "Puro",
-        category: "accesorios",
-        subcategory: "llaveros",
-        price: 3000,
-        originalPrice: 9000,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/captura_de_pantalla_2023-09-04_a_la_s_12-16-04-16474fb81ef0e854fa16938405908500-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "67% OFF"],
-        sizes: ["Único"],
-        stock: 25
-    },
-    {
-        id: 260949699,
-        name: "Llavero Clap Tulsi - Puro",
-        brand: "Puro",
-        category: "accesorios",
-        subcategory: "llaveros",
-        price: 3000,
-        originalPrice: 9000,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/captura_de_pantalla_2023-09-04_a_la_s_12-14-36-5d6c8b939fa5a9390c16938405105260-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "67% OFF"],
-        sizes: ["Único"],
-        stock: 14
-    },
-    {
-        id: 260949183,
-        name: "Llavero Clap Matcha - Puro",
-        brand: "Puro",
-        category: "accesorios",
-        subcategory: "llaveros",
-        price: 3000,
-        originalPrice: 9000,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/captura_de_pantalla_2023-09-04_a_la_s_12-11-20-8025ff7480cd01235b16938403328325-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "67% OFF"],
-        sizes: ["Único"],
-        stock: 18
-    },
-    {
-        id: 260947504,
-        name: "Llavero Clap Sandalo - Puro",
-        brand: "Puro",
-        category: "accesorios",
-        subcategory: "llaveros",
-        price: 3000,
-        originalPrice: 9000,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/captura_de_pantalla_2023-09-04_a_la_s_12-08-41-ec6c6508fa5c56c2d416938401314959-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "67% OFF"],
-        sizes: ["Único"],
-        stock: 22
-    },
-    {
-        id: 260944090,
-        name: "Cartuchera Bella Botánica - Puro",
-        brand: "Puro",
-        category: "accesorios",
-        subcategory: "cartucheras",
-        price: 6333,
-        originalPrice: 19000,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/captura_de_pantalla_2023-09-04_a_la_s_12-03-36-ac02302e1c9fe807e116938398468758-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "67% OFF"],
-        sizes: ["Único"],
-        stock: 30
-    },
-    {
-        id: 260943387,
-        name: "Cartuchera Bella Liverpool - Puro",
-        brand: "Puro",
-        category: "accesorios",
-        subcategory: "cartucheras",
-        price: 6333,
-        originalPrice: 19000,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/captura_de_pantalla_2023-09-04_a_la_s_12-00-50-6d405204ef0528271716938397131427-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "67% OFF"],
-        sizes: ["Único"],
-        stock: 20
-    },
-    {
-        id: 260942209,
-        name: "Cartuchera Bella Koi - Puro",
-        brand: "Puro",
-        category: "accesorios",
-        subcategory: "cartucheras",
-        price: 6333,
-        originalPrice: 19000,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/captura_de_pantalla_2023-09-04_a_la_s_11-58-17-5ab162624cf5d3a5ea16938395232262-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "67% OFF"],
-        sizes: ["Único"],
-        stock: 15
-    },
-    {
-        id: 260891298,
-        name: "Billetera Pachi Frida - Puro",
-        brand: "Puro",
-        category: "accesorios",
-        subcategory: "billeteras",
-        price: 11667,
-        originalPrice: 35000,
-        image: "https://dcdn-us.mitiendanube.com/stores/001/552/027/products/captura_de_pantalla_2023-09-04_a_la_s_11-47-59-994df511bc64e488d516938389657065-1024-1024.webp",
-        labels: ["3 cuotas sin interés", "67% OFF"],
-        sizes: ["Único"],
-        stock: 9
+        stock: 5,
+        sizesStock: {
+            "36": 1,
+            "37": 1,
+            "38": 1,
+            "39": 1,
+            "40": 1
+        }
     }
 ];
 
