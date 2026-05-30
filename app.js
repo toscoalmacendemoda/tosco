@@ -7,8 +7,9 @@ const PRODUCTS = [
         category: "calzado",
         subcategory: "zapatillas",
         price: 135000,
+        originalPrice: 168750, // 20% discount
         image: "assets/puro_sneakers.png",
-        labels: ["3 cuotas sin interés", "Envío gratis"],
+        labels: ["3 cuotas sin interés", "Envío gratis", "20% OFF"],
         sizes: [36, 37, 38, 39, 40]
     },
     {
@@ -19,7 +20,7 @@ const PRODUCTS = [
         subcategory: "carteras",
         price: 168900,
         image: "assets/agosti_bag.png",
-        labels: ["Cuotas sin interés"],
+        labels: ["Cuotas sin interés", "New In!"],
         sizes: ["Único"]
     },
     {
@@ -28,65 +29,11 @@ const PRODUCTS = [
         brand: "Winndia",
         category: "calzado",
         subcategory: "botas",
-        price: 182000,
+        price: 145600,
+        originalPrice: 182000, // 20% discount
         image: "assets/winndia_boots.png",
-        labels: ["Envío gratis", "New In!"],
+        labels: ["Envío gratis", "20% OFF"],
         sizes: [36, 37, 38, 39]
-    },
-    {
-        id: 4,
-        name: "Bandolera Winndia Compact",
-        brand: "Winndia",
-        category: "bolsos-y-mochilas",
-        subcategory: "bandoleras",
-        price: 98000,
-        image: "assets/agosti_bag.png",
-        labels: ["3 cuotas sin interés"],
-        sizes: ["Único"]
-    },
-    {
-        id: 5,
-        name: "Mochila Chimola Sport",
-        brand: "Chimola",
-        category: "bolsos-y-mochilas",
-        subcategory: "mochilas",
-        price: 115000,
-        image: "assets/agosti_bag.png",
-        labels: ["Promo"],
-        sizes: ["Único"]
-    },
-    {
-        id: 6,
-        name: "Alpargatas Chimmy Churry",
-        brand: "Chimmy Churry",
-        category: "calzado",
-        subcategory: "sandalias",
-        price: 64000,
-        image: "assets/puro_sneakers.png",
-        labels: ["3 cuotas sin interés"],
-        sizes: [36, 37, 38, 39, 40]
-    },
-    {
-        id: 7,
-        name: "Mate Terra de Madera",
-        brand: "Terra",
-        category: "terra",
-        subcategory: "mates",
-        price: 25000,
-        image: "assets/hero_tosco.png",
-        labels: ["Colección Terra"],
-        sizes: ["Único"]
-    },
-    {
-        id: 8,
-        name: "Billetera Antonia Agosti",
-        brand: "Antonia Agosti",
-        category: "accesorios",
-        subcategory: "billeteras",
-        price: 49000,
-        image: "assets/agosti_bag.png",
-        labels: ["New!"],
-        sizes: ["Único"]
     }
 ];
 
@@ -220,6 +167,13 @@ function renderProducts() {
     filtered.forEach(p => {
         const labelsHtml = p.labels.map(l => `<span class="label-pill ${l.toLowerCase().includes('envío') || l.toLowerCase().includes('gratis') ? 'free-shipping' : 'offer'}">${l}</span>`).join('');
         
+        const priceHtml = p.originalPrice 
+            ? `<div class="product-price">
+                 <span class="original-price" style="text-decoration: line-through; color: var(--gray-dark); margin-right: 8px; font-size: 13px;">$${p.originalPrice.toLocaleString('es-AR')}</span>
+                 <span style="color: #c0392b; font-weight: 700;">$${p.price.toLocaleString('es-AR')}</span>
+               </div>`
+            : `<div class="product-price">$${p.price.toLocaleString('es-AR')}</div>`;
+
         const card = document.createElement('div');
         card.className = 'product-card';
         card.innerHTML = `
@@ -230,7 +184,7 @@ function renderProducts() {
             <div class="product-info">
                 <div class="product-category">${p.brand} | ${p.subcategory}</div>
                 <h3 class="product-name">${p.name}</h3>
-                <div class="product-price">$${p.price.toLocaleString('es-AR')}</div>
+                ${priceHtml}
                 <button class="product-action-btn" onclick="addToCart(${p.id})">Agregar al Carrito</button>
             </div>
         `;
