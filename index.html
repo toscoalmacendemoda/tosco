@@ -322,10 +322,184 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <div>© Copyright TOSCO - 2026. Todos los derechos reservados.</div>
+            <div>© Copyright TOSCO - 2026. Todos los derechos reservados. | <a href="#" id="admin-panel-link" style="text-decoration: underline; font-weight: bold; color: var(--main-foreground);">Panel de Administración</a></div>
             <div>Defensa de las y los consumidores.</div>
         </div>
     </footer>
+
+    <!-- ADMIN PANEL OVERLAY & INTERFACE -->
+    <div id="admin-panel-container" class="admin-panel-overlay" style="display: none;">
+        <div class="admin-panel-box animate-fade">
+            <div class="admin-header">
+                <div class="admin-logo-wrapper">
+                    <img src="assets/logo.webp" alt="TOSCO Admin">
+                    <h2>Panel de Control - Almacén</h2>
+                </div>
+                <button class="drawer-close" id="admin-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="admin-content">
+                <!-- Summary Stats Bar -->
+                <div class="admin-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-box-open"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Productos</span>
+                            <span class="stat-value" id="admin-stat-total">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Sin Stock</span>
+                            <span class="stat-value" id="admin-stat-out-of-stock" style="color: #c0392b;">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Ventas del Mes</span>
+                            <span class="stat-value" id="admin-stat-sales">$389.200</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Con Envío Gratis</span>
+                            <span class="stat-value" id="admin-stat-shipping">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Controls Bar -->
+                <div class="admin-actions-bar">
+                    <div class="admin-search-wrapper">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="admin-search-input" placeholder="Buscar por nombre o marca...">
+                    </div>
+                    <div class="admin-buttons-group">
+                        <button class="btn-admin-action primary" id="admin-add-product-btn">
+                            <i class="fa-solid fa-plus"></i> Nuevo Producto
+                        </button>
+                        <button class="btn-admin-action" id="admin-export-btn" title="Exportar Catálogo JSON">
+                            <i class="fa-solid fa-download"></i> Exportar
+                        </button>
+                        <button class="btn-admin-action" id="admin-import-trigger" title="Importar Catálogo JSON">
+                            <i class="fa-solid fa-upload"></i> Importar
+                        </button>
+                        <input type="file" id="admin-import-file" style="display: none;" accept=".json">
+                        <button class="btn-admin-action danger" id="admin-reset-btn" title="Restaurar valores de fábrica">
+                            <i class="fa-solid fa-arrow-rotate-left"></i> Restablecer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Products Table -->
+                <div class="admin-table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Foto</th>
+                                <th>Nombre</th>
+                                <th>Marca / Sección</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Etiquetas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-products-tbody">
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT PRODUCT MODAL -->
+    <div id="product-modal-container" class="admin-modal-overlay" style="display: none;">
+        <div class="admin-modal-box animate-fade">
+            <div class="admin-modal-header">
+                <h3 id="modal-title">Agregar Nuevo Producto</h3>
+                <button class="drawer-close" id="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="product-form" class="admin-form">
+                <input type="hidden" id="form-product-id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-name">Nombre del Producto *</label>
+                        <input type="text" id="form-name" required placeholder="Ej. Zapatillas Puro Art">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-brand">Marca *</label>
+                        <select id="form-brand" required>
+                            <option value="Puro">Puro</option>
+                            <option value="Antonia Agosti">Antonia Agosti</option>
+                            <option value="Winndia">Winndia</option>
+                            <option value="Chimmy Churry">Chimmy Churry</option>
+                            <option value="Chimola">Chimola</option>
+                            <option value="Terra">Terra</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-category">Categoría Principal *</label>
+                        <select id="form-category" required>
+                            <option value="calzado">Calzado</option>
+                            <option value="bolsos-y-mochilas">Bolsos y Mochilas</option>
+                            <option value="accesorios">Accesorios</option>
+                            <option value="indumentaria">Indumentaria</option>
+                            <option value="terra">Terra</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-subcategory">Subcategoría *</label>
+                        <input type="text" id="form-subcategory" required placeholder="Ej. zapatillas, botas, carteras">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-price">Precio Final ($) *</label>
+                        <input type="number" id="form-price" required min="1" placeholder="Ej. 135000">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-original-price">Precio Original (Opcional, para Ofertas)</label>
+                        <input type="number" id="form-original-price" min="1" placeholder="Ej. 168000">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-stock">Stock Disponible *</label>
+                        <input type="number" id="form-stock" required min="0" placeholder="Ej. 15">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="form-image">URL de la Imagen *</label>
+                    <input type="text" id="form-image" required placeholder="Ej. https://cdn.com/image.webp o assets/imagen.png">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-sizes">Talles (Separados por coma)</label>
+                        <input type="text" id="form-sizes" placeholder="Ej. 36, 37, 38, 39, 40">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-labels">Etiquetas adicionales (Separadas por coma)</label>
+                        <input type="text" id="form-labels" placeholder="Ej. 3 cuotas sin interés, Nuevo, Envío gratis">
+                    </div>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button" class="btn-form-cancel" id="form-cancel-btn">Cancelar</button>
+                    <button type="submit" class="btn-form-save">Guardar Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
