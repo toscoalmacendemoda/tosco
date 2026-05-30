@@ -366,7 +366,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         await refreshLocalState();
         updateCartUI();
         setupEventListeners();
-        setupAdminEventListeners();
     } catch (err) {
         console.error("Error starting database: ", err);
         // Fallback to offline memory
@@ -374,7 +373,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderProducts();
         updateCartUI();
         setupEventListeners();
-        setupAdminEventListeners();
     }
 });
 
@@ -431,35 +429,7 @@ function setupEventListeners() {
     });
 }
 
-// ADMIN EVENT LISTENERS
-function setupAdminEventListeners() {
-    adminPanelLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        openAdminPanel();
-    });
-    
-    adminCloseBtn.addEventListener('click', closeAdminPanel);
-    
-    adminSearchInput.addEventListener('input', renderAdminTable);
-    
-    adminAddProductBtn.addEventListener('click', () => {
-        openProductModal(null);
-    });
 
-    adminExportBtn.addEventListener('click', exportCatalog);
-    
-    adminImportTrigger.addEventListener('click', () => {
-        adminImportFile.click();
-    });
-    
-    adminImportFile.addEventListener('change', importCatalog);
-    
-    adminResetBtn.addEventListener('click', resetDatabaseToFactory);
-
-    modalCloseBtn.addEventListener('click', closeProductModal);
-    formCancelBtn.addEventListener('click', closeProductModal);
-    productForm.addEventListener('submit', saveProductForm);
-}
 
 // RENDER MAIN WEB CATALOG
 function renderProducts() {
@@ -771,6 +741,7 @@ function updateShippingProgress(subtotal) {
     }
 }
 
+// Reset cart, save it, update cart UI and refresh database state
 window.checkoutAlert = function() {
     let subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     
@@ -795,254 +766,5 @@ window.checkoutAlert = function() {
         updateCartUI();
         closeCart();
         await refreshLocalState();
-        if (adminPanelContainer.style.display === 'flex') {
-            renderAdminTable();
-        }
     });
 };
-
-// ==========================================================================
-// ADMIN PANEL LOGIC ACTIONS
-// ==========================================================================
-function openAdminPanel() {
-    adminPanelContainer.style.display = 'flex';
-    document.body.style.overflow = 'hidden'; // block scroll
-    renderAdminTable();
-}
-
-function closeAdminPanel() {
-    adminPanelContainer.style.display = 'none';
-    document.body.style.overflow = '';
-}
-
-function updateAdminStats() {
-    statTotalEl.innerText = ALL_PRODUCTS.length;
-    
-    const outOfStockCount = ALL_PRODUCTS.filter(p => p.stock === 0).length;
-    statOutOfStockEl.innerText = outOfStockCount;
-    
-    const salesTotal = parseFloat(localStorage.getItem('tosco_monthly_sales')) || 389200;
-    statSalesEl.innerText = `$${salesTotal.toLocaleString('es-AR')}`;
-    
-    const freeShippingCount = ALL_PRODUCTS.filter(p => p.labels.some(l => l.toLowerCase().includes('gratis') || l.toLowerCase().includes('envío'))).length;
-    statShippingEl.innerText = freeShippingCount;
-}
-
-function renderAdminTable() {
-    adminProductsTbody.innerHTML = '';
-    updateAdminStats();
-    
-    const searchVal = adminSearchInput.value.toLowerCase().trim();
-    
-    const filtered = ALL_PRODUCTS.filter(p => 
-        p.name.toLowerCase().includes(searchVal) || 
-        p.brand.toLowerCase().includes(searchVal) ||
-        p.category.toLowerCase().includes(searchVal) ||
-        p.subcategory.toLowerCase().includes(searchVal)
-    );
-
-    if (filtered.length === 0) {
-        adminProductsTbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--gray-dark); font-style: italic;">No se encontraron productos.</td></tr>`;
-        return;
-    }
-
-    filtered.forEach(p => {
-        const labelsHtml = p.labels.map(l => `<span class="label-pill ${l.toLowerCase().includes('envío') || l.toLowerCase().includes('gratis') ? 'free-shipping' : 'offer'}" style="margin-right: 4px; display: inline-block;">${l}</span>`).join('');
-        
-        const stockDisplay = p.stock === 0 
-            ? `<span style="color: #c0392b; font-weight: 700; background-color: #fce8e6; padding: 4px 8px; border-radius: 4px;">Sin Stock</span>` 
-            : `<span style="font-weight: 600; color: #2c3e50;">${p.stock} u.</span>`;
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><img src="${p.image}" alt="${p.name}" class="admin-thumb" onerror="this.src='assets/hero_tosco.png'"></td>
-            <td style="font-weight: bold;">${p.name}</td>
-            <td>${p.brand} (${p.category} / ${p.subcategory})</td>
-            <td>
-                ${p.originalPrice ? `<span style="text-decoration: line-through; color: var(--gray-dark); margin-right: 8px;">$${p.originalPrice.toLocaleString('es-AR')}</span>` : ''}
-                <span style="font-weight: bold;">$${p.price.toLocaleString('es-AR')}</span>
-            </td>
-            <td>${stockDisplay}</td>
-            <td>${labelsHtml}</td>
-            <td>
-                <div class="admin-actions-cell">
-                    <button class="btn-table-action" onclick="openProductModal(${p.id})"><i class="fa-regular fa-edit"></i> Editar</button>
-                    <button class="btn-table-action delete" onclick="deleteProduct(${p.id})"><i class="fa-regular fa-trash-can"></i></button>
-                </div>
-            </td>
-        `;
-        adminProductsTbody.appendChild(tr);
-    });
-}
-
-// Modal handling
-window.openProductModal = function(productId) {
-    productModalContainer.style.display = 'flex';
-    
-    if (productId) {
-        // Edit Mode
-        const p = ALL_PRODUCTS.find(item => item.id === productId);
-        if (!p) return;
-        
-        modalTitle.innerText = "Editar Producto";
-        formProductId.value = p.id;
-        formName.value = p.name;
-        formBrand.value = p.brand;
-        formCategory.value = p.category;
-        formSubcategory.value = p.subcategory;
-        formPrice.value = p.price;
-        formOriginalPrice.value = p.originalPrice || '';
-        formStock.value = p.stock !== undefined ? p.stock : 10;
-        formImage.value = p.image;
-        formSizes.value = p.sizes ? p.sizes.join(', ') : 'Único';
-        formLabels.value = p.labels ? p.labels.join(', ') : '';
-    } else {
-        // Add Mode
-        modalTitle.innerText = "Agregar Nuevo Producto";
-        productForm.reset();
-        formProductId.value = '';
-    }
-};
-
-function closeProductModal() {
-    productModalContainer.style.display = 'none';
-}
-
-async function saveProductForm(e) {
-    e.preventDefault();
-    
-    const pid = formProductId.value;
-    const isEdit = pid !== '';
-    
-    // Parse sizes
-    let sizesArr = formSizes.value.split(',').map(s => s.trim()).filter(s => s !== '');
-    if (sizesArr.length === 0) sizesArr = ["Único"];
-    else {
-        // if they are all numbers, convert to integers
-        sizesArr = sizesArr.map(s => {
-            const parsed = parseInt(s);
-            return isNaN(parsed) ? s : parsed;
-        });
-    }
-
-    // Parse labels
-    const labelsArr = formLabels.value.split(',').map(l => l.trim()).filter(l => l !== '');
-    
-    const priceVal = parseInt(formPrice.value);
-    const origPriceVal = formOriginalPrice.value ? parseInt(formOriginalPrice.value) : null;
-    const stockVal = parseInt(formStock.value);
-    
-    // Auto labels helper
-    if (priceVal > 250000 && !labelsArr.some(l => l.toLowerCase().includes('envío') || l.toLowerCase().includes('gratis'))) {
-        labelsArr.push("Envío gratis");
-    }
-    
-    const productData = {
-        id: isEdit ? parseInt(pid) : Date.now(),
-        name: formName.value.trim(),
-        brand: formBrand.value,
-        category: formCategory.value,
-        subcategory: formSubcategory.value.trim().toLowerCase(),
-        price: priceVal,
-        originalPrice: origPriceVal,
-        stock: stockVal,
-        image: formImage.value.trim(),
-        labels: labelsArr,
-        sizes: sizesArr
-    };
-
-    try {
-        await dbPutProduct(productData);
-        await refreshLocalState();
-        renderAdminTable();
-        closeProductModal();
-    } catch (err) {
-        console.error("Error saving product: ", err);
-        alert("Ocurrió un error al guardar el producto.");
-    }
-}
-
-window.deleteProduct = async function(productId) {
-    if (!confirm("¿Está seguro que desea eliminar este producto?")) return;
-    
-    try {
-        await dbDeleteProduct(productId);
-        await refreshLocalState();
-        renderAdminTable();
-    } catch (err) {
-        console.error("Error deleting product: ", err);
-        alert("Ocurrió un error al borrar el producto.");
-    }
-};
-
-// Reset database
-async function resetDatabaseToFactory() {
-    if (!confirm("¿Desea restablecer toda la base de datos a los valores de fábrica originales? Se perderán las cargas nuevas.")) return;
-    
-    try {
-        await dbClearAll();
-        // Load initial seed
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        INITIAL_PRODUCTS.forEach(p => {
-            if (p.stock === undefined) p.stock = 10;
-            store.put(p);
-        });
-        
-        // Wait transaction complete
-        await new Promise((resolve) => {
-            transaction.oncomplete = () => resolve();
-        });
-        
-        await refreshLocalState();
-        renderAdminTable();
-        alert("¡Base de datos restablecida con éxito!");
-    } catch (err) {
-        console.error("Error resetting DB: ", err);
-        alert("Ocurrió un error al resetear.");
-    }
-}
-
-// Export Catalog JSON
-function exportCatalog() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(ALL_PRODUCTS, null, 4));
-    const dlAnchorElem = document.createElement('a');
-    dlAnchorElem.setAttribute("href", dataStr);
-    dlAnchorElem.setAttribute("download", "tosco_catalog.json");
-    dlAnchorElem.click();
-}
-
-// Import Catalog JSON
-function importCatalog(e) {
-    const fileReader = new FileReader();
-    const file = e.target.files[0];
-    if (!file) return;
-
-    fileReader.onload = async (event) => {
-        try {
-            const importedArr = JSON.parse(event.target.result);
-            if (!Array.isArray(importedArr)) {
-                alert("El archivo no contiene un catálogo válido.");
-                return;
-            }
-
-            if (!confirm(`¿Desea importar ${importedArr.length} productos? Se sobreescribirán los productos con IDs coincidentes.`)) return;
-
-            for (const p of importedArr) {
-                if (p.id && p.name && p.price) {
-                    if (p.stock === undefined) p.stock = 10;
-                    await dbPutProduct(p);
-                }
-            }
-
-            await refreshLocalState();
-            renderAdminTable();
-            alert("¡Catálogo importado con éxito!");
-            adminImportFile.value = ''; // Reset input
-        } catch (err) {
-            console.error("Error parsing import: ", err);
-            alert("El archivo JSON no posee el formato correcto.");
-        }
-    };
-    fileReader.readAsText(file);
-}
