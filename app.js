@@ -113,11 +113,16 @@ async function dbPutOrder(order) {
 // INDEXEDDB / FIREBASE CONTROLLER
 async function dbInit() {
     try {
-        const res = await fetch('/api/firebase-config');
-        if (!res.ok) throw new Error("Could not fetch Firebase config");
-        const config = await res.json();
+        const config = {
+            apiKey: "AIzaSyBA0MU8Pt0sctRIUeg1uiMdz2Rq0e5aNmU",
+            authDomain: "tosco-90f31.firebaseapp.com",
+            projectId: "tosco-90f31",
+            storageBucket: "tosco-90f31.firebasestorage.app",
+            messagingSenderId: "1079789010898",
+            appId: "1:1079789010898:web:46581a797283726d21920b"
+        };
         
-        if (config.apiKey && config.projectId) {
+        if (typeof firebase !== 'undefined') {
             if (!firebase.apps.length) {
                 firebase.initializeApp(config);
             }
@@ -139,6 +144,8 @@ async function dbInit() {
                 console.log("Firebase Firestore database seeded successfully.");
             }
             return;
+        } else {
+            throw new Error("Firebase SDK not loaded on client");
         }
     } catch (err) {
         console.error("Firebase initialization failed, falling back to IndexedDB:", err);
