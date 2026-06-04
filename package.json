@@ -1,0 +1,9 @@
+{
+  "name": "tosco-clone",
+  "version": "1.0.0",
+  "description": "Tosco Almacén de Moda",
+  "main": "app.js",
+  "dependencies": {
+    "nodemailer": "^6.9.13"
+  }
+}

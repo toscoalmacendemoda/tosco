@@ -1,4 +1,6 @@
 // Vercel Serverless Function: api/send-otp.js
+const nodemailer = require('nodemailer');
+
 module.exports = async (req, res) => {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -44,10 +46,47 @@ module.exports = async (req, res) => {
             body: otp
         });
 
-        // 3. Send email to customer (If Resend/SendGrid credentials are set, call them. 
-        // Otherwise, in Sandbox/Demo mode, we return the code to the frontend for easy testing).
+        // 3. Send email to customer
+        let sentMethod = null;
+        const gmailUser = process.env.GMAIL_USER;
+        const gmailPass = process.env.GMAIL_PASS;
         const resendApiKey = process.env.RESEND_API_KEY;
-        if (resendApiKey) {
+
+        const subject = `${otp} es tu código de verificación - Tosco`;
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #f0f0f0; border-radius: 8px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="color: #333333; margin: 0;">Tosco Almacén de Moda</h2>
+                </div>
+                <p style="color: #555555; font-size: 14px; line-height: 1.5;">¡Hola!</p>
+                <p style="color: #555555; font-size: 14px; line-height: 1.5;">Tu código de verificación para ingresar a la tienda es:</p>
+                <div style="background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; text-align: center; margin: 20px 0;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #2c3e50; font-family: monospace;">${otp}</span>
+                </div>
+                <p style="color: #999999; font-size: 12px; line-height: 1.5; text-align: center; margin-top: 20px;">El código expirará en 10 minutos. Si no solicitaste este código, puedes ignorar este correo de forma segura.</p>
+            </div>
+        `;
+
+        if (gmailUser && gmailPass) {
+            // Send via Gmail SMTP
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: gmailUser,
+                    pass: gmailPass
+                }
+            });
+
+            await transporter.sendMail({
+                from: `"Tosco Almacén" <${gmailUser}>`,
+                to: cleanEmail,
+                subject: subject,
+                html: htmlContent
+            });
+            sentMethod = 'gmail';
+            console.log(`OTP email sent via Gmail to ${cleanEmail}`);
+        } else if (resendApiKey) {
+            // Send via Resend API
             await fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: {
@@ -57,17 +96,20 @@ module.exports = async (req, res) => {
                 body: JSON.stringify({
                     from: 'Tosco Almacén <onboarding@resend.dev>',
                     to: cleanEmail,
-                    subject: `${otp} es tu código de verificación - Tosco`,
-                    html: `<h3>¡Hola!</h3><p>Tu código de verificación para ingresar a Tosco Almacén de Moda es:</p><h1 style="font-size:32px; letter-spacing:2px; color:#2c3e50;">${otp}</h1><p>El código expirará en 10 minutos.</p>`
+                    subject: subject,
+                    html: htmlContent
                 })
             });
+            sentMethod = 'resend';
+            console.log(`OTP email sent via Resend to ${cleanEmail}`);
         }
 
         return res.status(200).json({
             success: true,
             message: 'Código enviado correctamente.',
-            // Return code for sandbox simulation if Resend is not configured yet
-            code: resendApiKey ? null : otp 
+            sentMethod: sentMethod,
+            // Return code for sandbox simulation if no email client is configured
+            code: sentMethod ? null : otp 
         });
 
     } catch (error) {

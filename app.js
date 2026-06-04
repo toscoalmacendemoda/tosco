@@ -359,14 +359,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         await dbInit();
         await refreshLocalState();
+        await loadDynamicMenu();
         updateCartUI();
         setupEventListeners();
+
+        // Check if product parameter exists to auto-open modal
+        const productParam = urlParams.get('product');
+        if (productParam) {
+            const pId = parseInt(productParam);
+            if (!isNaN(pId)) {
+                openProductDetail(pId);
+            }
+        }
     } catch (err) {
         console.error("Error starting database: ", err);
         // Fallback to offline memory
         ALL_PRODUCTS = INITIAL_PRODUCTS;
         applyCustomAppearance();
         updateAuthHeader();
+        loadDynamicMenu();
         renderProducts();
         updateCartUI();
         setupEventListeners();
@@ -375,6 +386,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function refreshLocalState() {
     ALL_PRODUCTS = await dbGetAllProducts();
+    await loadDynamicMenu();
     renderProducts();
 }
 
@@ -628,6 +640,9 @@ function renderProducts() {
     
     // Filtering logic cascade
     let filtered = ALL_PRODUCTS.filter(p => (p.stock === undefined || p.stock > 0) && p.visible !== false);
+    
+    // Sort products by custom order ascending
+    filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
     
     if (activeCategory !== 'all') {
         filtered = filtered.filter(p => p.category === activeCategory);
@@ -1076,6 +1091,13 @@ async function completeOrderPlacement(orderData) {
         monthlySales += orderData.subtotal;
         localStorage.setItem('tosco_monthly_sales', monthlySales);
 
+        // Send confirmation email asynchronously (non-blocking)
+        fetch('/api/send-order-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: orderData })
+        }).catch(err => console.error("Error sending order confirmation email:", err));
+
         alert(`¡Pago acreditado con éxito! Tu pedido #${orderData.id} ha sido registrado. Envío por ${orderData.carrier}.`);
         
         // Clean cart, session and reload
@@ -1256,9 +1278,9 @@ window.openProductDetail = async function(productId) {
             
             <input type="hidden" id="detail-selected-size" value="${defaultSize}">
             
-            <a href="https://wa.me/5492284620258?text=Hola,%20estoy%20interesado%20en%20el%20producto%20${encodeURIComponent(p.name)}" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; padding: 12px; background-color: #25d366; color: white; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; transition: var(--transition-smooth); width: 100%;">
+            <button onclick="handleWhatsAppClick(${p.id})" style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; padding: 12px; background-color: #25d366; color: white; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; transition: var(--transition-smooth); width: 100%; border: none; cursor: pointer;">
                 <i class="fa-brands fa-whatsapp" style="font-size: 16px;"></i> Preguntar por WhatsApp
-            </a>
+            </button>
         </div>
     `;
 
@@ -1344,3 +1366,228 @@ window.addDetailToCart = function(productId) {
     closeProductDetail();
     openCart();
 };
+
+// WHATSAPP LEAD CAPTURE AND MESSAGING
+window.handleWhatsAppClick = async function(productId) {
+    const p = ALL_PRODUCTS.find(prod => prod.id === productId);
+    if (!p) return;
+
+    const selectedSize = document.getElementById('detail-selected-size').value;
+    
+    if (!loggedInUserEmail) {
+        const email = prompt("Para asesorarte mejor y enviarte la confirmación, por favor ingresa tu correo electrónico:");
+        if (email && email.includes('@')) {
+            const cleanEmail = email.trim().toLowerCase();
+            
+            // Save lead in Firestore (live mode)
+            if (isUsingFirebase) {
+                try {
+                    await dbFirestore.collection('leads').doc(cleanEmail).set({
+                        email: cleanEmail,
+                        date: new Date().toISOString(),
+                        source: 'Consulta WhatsApp',
+                        productOfInterest: p.name,
+                        productIdOfInterest: p.id
+                    });
+                    console.log("Lead registered in Firestore");
+                } catch(e) {
+                    console.error("Error saving lead in Firestore:", e);
+                }
+            }
+            
+            // Send OTP registration key in KVdb background
+            const bucketId = 'bucket_tosco_almacen_335196ff';
+            fetch(`https://kvdb.io/${bucketId}/tosco:email:${cleanEmail}`, {
+                method: 'POST',
+                body: new Date().toISOString()
+            }).catch(e => console.error(e));
+
+            loggedInUserEmail = cleanEmail;
+            localStorage.setItem('tosco_logged_user', cleanEmail);
+            updateAuthHeader();
+        }
+    }
+
+    const productLink = `${window.location.origin}${window.location.pathname}?product=${p.id}`;
+    const whatsappMessage = `Hola, estoy interesado en el producto: ${p.name}\nTalle: ${selectedSize}\nLink: ${productLink}`;
+    const whatsappUrl = `https://wa.me/5492284620258?text=${encodeURIComponent(whatsappMessage)}`;
+    
+    window.open(whatsappUrl, '_blank');
+};
+
+async function dbGetCatalogConfig() {
+    const defaultCatalog = {
+        brands: [
+            { name: "Puro", banner: "assets/banner_puro.webp" },
+            { name: "Antonia Agosti", banner: "assets/banner_agosti.webp" },
+            { name: "Winndia", banner: "assets/banner_winndia.webp" },
+            { name: "Chimmy Churry", banner: "assets/banner_chimmy.webp" }
+        ],
+        subcategories: [
+            { category: "calzado", name: "Zapatillas", value: "zapatillas" },
+            { category: "calzado", name: "Sandalias", value: "sandalias" },
+            { category: "calzado", name: "Botas y Borcegos", value: "botas" },
+            { category: "bolsos-y-mochilas", name: "Bandoleras", value: "bandoleras" },
+            { category: "bolsos-y-mochilas", name: "Carteras", value: "carteras" },
+            { category: "bolsos-y-mochilas", name: "Mochilas", value: "mochilas" },
+            { category: "accesorios", name: "Billeteras", value: "billeteras" },
+            { category: "accesorios", name: "Riñoneras", value: "rinoneras" },
+            { category: "accesorios", name: "Llaveros", value: "llaveros" }
+        ]
+    };
+
+    if (isUsingFirebase) {
+        try {
+            const doc = await dbFirestore.collection('config').doc('catalog').get();
+            if (doc.exists) {
+                return doc.data();
+            } else {
+                return defaultCatalog;
+            }
+        } catch (e) {
+            console.error("Error fetching config from Firestore:", e);
+        }
+    }
+    
+    const local = localStorage.getItem('tosco_catalog_config');
+    return local ? JSON.parse(local) : defaultCatalog;
+}
+
+// DYNAMIC MENU LOADER
+async function loadDynamicMenu() {
+    const catalogConfig = await dbGetCatalogConfig();
+
+    // 1. Render Navigation Mega Menu
+    const desktopNav = document.querySelector('.nav-desktop');
+    if (desktopNav) {
+        desktopNav.innerHTML = '';
+        
+        const categories = [
+            { id: 'calzado', label: 'Calzado' },
+            { id: 'bolsos-y-mochilas', label: 'Bolsos y Mochilas' },
+            { id: 'accesorios', label: 'Accesorios' }
+        ];
+        
+        categories.forEach(cat => {
+            const subcats = catalogConfig.subcategories.filter(s => s.category === cat.id);
+            const navItem = document.createElement('div');
+            navItem.className = 'nav-item';
+            navItem.innerHTML = `${cat.label} <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>`;
+            
+            const dropdown = document.createElement('div');
+            dropdown.className = 'nav-dropdown';
+            subcats.forEach(sub => {
+                const a = document.createElement('a');
+                a.href = '#';
+                a.className = 'dropdown-link';
+                a.innerText = sub.name;
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    setCatalogSubcategory(sub.value);
+                };
+                dropdown.appendChild(a);
+            });
+            navItem.appendChild(dropdown);
+            desktopNav.appendChild(navItem);
+        });
+        
+        // Add Marcas Dropdown
+        const brandsNavItem = document.createElement('div');
+        brandsNavItem.className = 'nav-item';
+        brandsNavItem.innerHTML = `Marcas <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>`;
+        const brandsDropdown = document.createElement('div');
+        brandsDropdown.className = 'nav-dropdown';
+        catalogConfig.brands.forEach(brand => {
+            const a = document.createElement('a');
+            a.href = '#';
+            a.className = 'dropdown-link';
+            a.innerText = brand.name;
+            a.onclick = (e) => {
+                e.preventDefault();
+                setCatalogBrand(brand.name);
+            };
+            brandsDropdown.appendChild(a);
+        });
+        brandsNavItem.appendChild(brandsDropdown);
+        desktopNav.appendChild(brandsNavItem);
+        
+        // Add Terra link
+        const terraLink = document.createElement('a');
+        terraLink.href = '#';
+        terraLink.className = 'nav-item';
+        terraLink.innerText = 'Terra';
+        terraLink.onclick = (e) => {
+            e.preventDefault();
+            setCatalogFilter('terra');
+        };
+        desktopNav.appendChild(terraLink);
+    }
+
+    // 2. Render mobile menu list
+    const mobileMenuContent = document.querySelector('#mobile-menu-drawer .drawer-content');
+    if (mobileMenuContent) {
+        let mobileHtml = `<ul class="footer-links" style="font-size: 16px; line-height: 2.5;">`;
+        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('all'); closeMobileMenu();">Inicio</a></li>`;
+        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('calzado'); closeMobileMenu();">Calzado</a></li>`;
+        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('bolsos-y-mochilas'); closeMobileMenu();">Bolsos y Mochilas</a></li>`;
+        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('accesorios'); closeMobileMenu();">Accesorios</a></li>`;
+        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('indumentaria'); closeMobileMenu();">Indumentaria</a></li>`;
+        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('terra'); closeMobileMenu();">Terra</a></li>`;
+        mobileHtml += `</ul>`;
+        mobileMenuContent.innerHTML = mobileHtml;
+    }
+
+    // 3. Render Brand banners
+    const brandBannersContainer = document.getElementById('brand-banners-container');
+    if (brandBannersContainer && catalogConfig.brands.length > 0) {
+        brandBannersContainer.innerHTML = '';
+        const brands = catalogConfig.brands;
+        
+        const leftCol = document.createElement('div');
+        leftCol.className = 'brand-col-left';
+        leftCol.innerHTML = `
+            <div class="textbanner big-banner" onclick="setCatalogBrand('${brands[0].name}')">
+                <img src="${brands[0].banner}" class="banner-img" alt="${brands[0].name}" onerror="this.src='assets/hero_tosco.png'">
+                <div class="textbanner-text">
+                    <h3 class="textbanner-title">${brands[0].name.toUpperCase()}</h3>
+                    <span class="btn-line">ver más</span>
+                </div>
+            </div>
+        `;
+        brandBannersContainer.appendChild(leftCol);
+        
+        if (brands.length > 1) {
+            const rightCol = document.createElement('div');
+            rightCol.className = 'brand-col-right';
+            
+            let rightHtml = `
+                <div class="textbanner wide-banner" onclick="setCatalogBrand('${brands[1].name}')">
+                    <img src="${brands[1].banner}" class="banner-img" alt="${brands[1].name}" onerror="this.src='assets/hero_tosco.png'">
+                    <div class="textbanner-text">
+                        <h3 class="textbanner-title">${brands[1].name}</h3>
+                        <span class="btn-line">ver más</span>
+                    </div>
+                </div>
+            `;
+            
+            if (brands.length > 2) {
+                rightHtml += `<div class="brand-row-split">`;
+                for (let i = 2; i < brands.length; i++) {
+                    rightHtml += `
+                        <div class="textbanner square-banner" onclick="setCatalogBrand('${brands[i].name}')">
+                            <img src="${brands[i].banner}" class="banner-img" alt="${brands[i].name}" onerror="this.src='assets/hero_tosco.png'">
+                            <div class="textbanner-text">
+                                <h3 class="textbanner-title" style="font-size: 16px;">${brands[i].name}</h3>
+                                <span class="btn-line">ver más</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                rightHtml += `</div>`;
+            }
+            
+            rightCol.innerHTML = rightHtml;
+            brandBannersContainer.appendChild(rightCol);
+        }
+    }
+}

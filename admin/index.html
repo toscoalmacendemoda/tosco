@@ -10,6 +10,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TOSCO Admin | Panel de Control</title>
+    <link rel="shortcut icon" href="/assets/logo.webp" type="image/webp">
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -125,6 +126,7 @@
                 <button class="btn-admin-action primary" id="tab-products-btn" style="border-radius:4px;"><i class="fa-solid fa-box"></i> Productos</button>
                 <button class="btn-admin-action" id="tab-orders-btn" style="border-radius:4px;"><i class="fa-solid fa-receipt"></i> Pedidos y Envíos</button>
                 <button class="btn-admin-action" id="tab-appearance-btn" style="border-radius:4px;"><i class="fa-solid fa-palette"></i> Apariencia</button>
+                <button class="btn-admin-action" id="tab-catalog-btn" style="border-radius:4px;"><i class="fa-solid fa-tags"></i> Catálogo y Orden</button>
             </div>
             
             <div class="admin-content" style="flex:1; overflow-y:auto;">
@@ -273,6 +275,109 @@
                         </form>
                     </div>
                 </div>
+
+                <!-- CATALOG & ORDER TAB PANE -->
+                <div id="tab-catalog-pane" style="display:none; flex-direction:column; gap:25px; padding: 20px;">
+                    <!-- Grid columns for Brands and Categories management -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
+                        
+                        <!-- Brands Panel -->
+                        <div style="background:#ffffff; padding:20px; border-radius:6px; border:1px solid var(--gray-medium);">
+                            <h3 style="font-family:'Lora', serif; font-size:18px; border-bottom:1px solid var(--gray-medium); padding-bottom:8px; margin-bottom:15px; color:var(--main-foreground);"><i class="fa-solid fa-copyright"></i> Marcas</h3>
+                            
+                            <!-- Add brand form -->
+                            <form id="brand-form" style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px; padding-bottom:15px; border-bottom:1px dashed var(--gray-medium);">
+                                <input type="text" id="brand-name-input" placeholder="Nombre de la Marca (ej. Puro)" required style="padding:8px; border:1px solid var(--gray-medium); border-radius:4px; font-size:12px;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <input type="file" id="brand-banner-file" accept="image/*" style="display:none;">
+                                    <button type="button" class="btn-admin-action" onclick="document.getElementById('brand-banner-file').click()" style="padding:6px 10px; font-size:11px;"><i class="fa-solid fa-image"></i> Cargar Banner</button>
+                                    <span id="brand-banner-filename" style="font-size:11px; color:var(--gray-dark); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:150px;">Sin banner</span>
+                                </div>
+                                <input type="hidden" id="brand-banner-url">
+                                <button type="submit" class="btn-admin-action primary" style="padding:8px; font-size:12px; align-self:flex-start;"><i class="fa-solid fa-plus"></i> Agregar Marca</button>
+                            </form>
+
+                            <!-- Brands list -->
+                            <div style="max-height:250px; overflow-y:auto;">
+                                <table class="admin-table" style="font-size:12px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Banner</th>
+                                            <th>Nombre</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-brands-tbody">
+                                        <!-- Loaded via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Categories/Subcategories Panel -->
+                        <div style="background:#ffffff; padding:20px; border-radius:6px; border:1px solid var(--gray-medium);">
+                            <h3 style="font-family:'Lora', serif; font-size:18px; border-bottom:1px solid var(--gray-medium); padding-bottom:8px; margin-bottom:15px; color:var(--main-foreground);"><i class="fa-solid fa-tags"></i> Subcategorías</h3>
+                            
+                            <!-- Add subcategory form -->
+                            <form id="subcategory-form" style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px; padding-bottom:15px; border-bottom:1px dashed var(--gray-medium);">
+                                <select id="subcat-parent-select" required style="padding:8px; border:1px solid var(--gray-medium); border-radius:4px; font-size:12px;">
+                                    <option value="calzado">Calzado</option>
+                                    <option value="bolsos-y-mochilas">Bolsos y Mochilas</option>
+                                    <option value="accesorios">Accesorios</option>
+                                    <option value="indumentaria">Indumentaria</option>
+                                    <option value="terra">Terra</option>
+                                </select>
+                                <input type="text" id="subcat-name-input" placeholder="Nombre visible (ej. Botas y Borcegos)" required style="padding:8px; border:1px solid var(--gray-medium); border-radius:4px; font-size:12px;">
+                                <input type="text" id="subcat-val-input" placeholder="Valor URL (ej. botas)" required style="padding:8px; border:1px solid var(--gray-medium); border-radius:4px; font-size:12px;">
+                                <button type="submit" class="btn-admin-action primary" style="padding:8px; font-size:12px; align-self:flex-start;"><i class="fa-solid fa-plus"></i> Agregar Subcategoría</button>
+                            </form>
+
+                            <!-- Subcategories list -->
+                            <div style="max-height:250px; overflow-y:auto;">
+                                <table class="admin-table" style="font-size:12px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Padre</th>
+                                            <th>Subcategoría</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-subcategories-tbody">
+                                        <!-- Loaded via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Product Sorting Section -->
+                    <div style="background:#ffffff; padding:20px; border-radius:6px; border:1px solid var(--gray-medium); display:flex; flex-direction:column; gap:15px;">
+                        <h3 style="font-family:'Lora', serif; font-size:18px; border-bottom:1px solid var(--gray-medium); padding-bottom:8px; margin-bottom:5px; color:var(--main-foreground);"><i class="fa-solid fa-sort"></i> Orden de Productos en Tienda</h3>
+                        <p style="font-size:12px; color:var(--gray-dark); margin:0;">Ordena los productos usando los botones "Subir" / "Bajar" o escribe su número de orden. Luego haz clic en <strong>Guardar Cambios de Catálogo</strong>.</p>
+                        
+                        <div style="max-height:400px; overflow-y:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">Foto</th>
+                                        <th>Nombre del Producto</th>
+                                        <th>Marca / Cat</th>
+                                        <th style="width: 120px;">Orden</th>
+                                        <th style="width: 160px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-sorting-tbody">
+                                    <!-- Loaded via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <button id="save-catalog-config-btn" class="btn-admin-action primary" style="align-self:flex-start; padding: 12px 25px; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Guardar Cambios de Catálogo</button>
+                    </div>
+
+                </div>
+            </div>
             </div>
         </div>
     </div>

@@ -27,6 +27,7 @@ let db = null;
 let ALL_PRODUCTS = [];
 let ALL_ORDERS = [];
 let activeOrderFilter = 'all'; // all, Pendiente, Activo, Completado
+let CATALOG_CONFIG = { brands: [], subcategories: [] };
 
 // DOM ELEMENTS - LOGIN
 let loginContainer, loginForm, usernameInput, passwordInput, errorMessage;
@@ -35,7 +36,7 @@ let loginContainer, loginForm, usernameInput, passwordInput, errorMessage;
 let adminMainView, adminLogoutBtn;
 
 // View Tab Panes and Buttons
-let tabProductsBtn, tabOrdersBtn, tabAppearanceBtn, tabProductsPane, tabOrdersPane, tabAppearancePane;
+let tabProductsBtn, tabOrdersBtn, tabAppearanceBtn, tabCatalogBtn, tabProductsPane, tabOrdersPane, tabAppearancePane, tabCatalogPane;
 
 // Products Table Elements
 let adminProductsTbody, adminSearchInput, adminAddProductBtn, adminExportBtn, adminImportTrigger, adminImportFile, adminResetBtn;
@@ -69,9 +70,11 @@ function initDOMElements() {
     tabProductsBtn = document.getElementById('tab-products-btn');
     tabOrdersBtn = document.getElementById('tab-orders-btn');
     tabAppearanceBtn = document.getElementById('tab-appearance-btn');
+    tabCatalogBtn = document.getElementById('tab-catalog-btn');
     tabProductsPane = document.getElementById('tab-products-pane');
     tabOrdersPane = document.getElementById('tab-orders-pane');
     tabAppearancePane = document.getElementById('tab-appearance-pane');
+    tabCatalogPane = document.getElementById('tab-catalog-pane');
 
     adminProductsTbody = document.getElementById('admin-products-tbody');
     adminSearchInput = document.getElementById('admin-search-input');
@@ -472,9 +475,11 @@ function setupAdminEventListeners() {
         tabProductsBtn.classList.add('primary');
         tabOrdersBtn.classList.remove('primary');
         tabAppearanceBtn.classList.remove('primary');
+        tabCatalogBtn.classList.remove('primary');
         tabProductsPane.style.display = 'flex';
         tabOrdersPane.style.display = 'none';
         tabAppearancePane.style.display = 'none';
+        tabCatalogPane.style.display = 'none';
         renderAdminTable();
     });
 
@@ -482,9 +487,11 @@ function setupAdminEventListeners() {
         tabOrdersBtn.classList.add('primary');
         tabProductsBtn.classList.remove('primary');
         tabAppearanceBtn.classList.remove('primary');
+        tabCatalogBtn.classList.remove('primary');
         tabProductsPane.style.display = 'none';
         tabOrdersPane.style.display = 'flex';
         tabAppearancePane.style.display = 'none';
+        tabCatalogPane.style.display = 'none';
         renderOrdersTable();
     });
 
@@ -492,9 +499,11 @@ function setupAdminEventListeners() {
         tabAppearanceBtn.classList.add('primary');
         tabProductsBtn.classList.remove('primary');
         tabOrdersBtn.classList.remove('primary');
+        tabCatalogBtn.classList.remove('primary');
         tabProductsPane.style.display = 'none';
         tabOrdersPane.style.display = 'none';
         tabAppearancePane.style.display = 'flex';
+        tabCatalogPane.style.display = 'none';
 
         // Load current config
         logoPreviewImg.src = localStorage.getItem('tosco_custom_logo') || '/assets/logo.webp';
@@ -502,6 +511,18 @@ function setupAdminEventListeners() {
         configTickerInput.value = localStorage.getItem('tosco_custom_ticker') || '3 CUOTAS SIN INTERÉS | ENVÍO GRATIS SUPERANDO LOS $250.000';
         logoPreviewName.innerText = "Ningún archivo seleccionado";
         heroPreviewName.innerText = "Ningún archivo seleccionado";
+    });
+
+    tabCatalogBtn.addEventListener('click', () => {
+        tabCatalogBtn.classList.add('primary');
+        tabProductsBtn.classList.remove('primary');
+        tabOrdersBtn.classList.remove('primary');
+        tabAppearanceBtn.classList.remove('primary');
+        tabProductsPane.style.display = 'none';
+        tabOrdersPane.style.display = 'none';
+        tabAppearancePane.style.display = 'none';
+        tabCatalogPane.style.display = 'flex';
+        initCatalogTabUI();
     });
 
     // Appearance Form Submit
@@ -1044,4 +1065,257 @@ window.toggleProductVisibility = async function(productId) {
     } catch (err) {
         console.error("Error toggling product visibility: ", err);
     }
+};
+
+// DATABASE CATALOG ACTIONS
+async function dbGetCatalogConfig() {
+    const defaultCatalog = {
+        brands: [
+            { name: "Puro", banner: "assets/banner_puro.webp" },
+            { name: "Antonia Agosti", banner: "assets/banner_agosti.webp" },
+            { name: "Winndia", banner: "assets/banner_winndia.webp" },
+            { name: "Chimmy Churry", banner: "assets/banner_chimmy.webp" }
+        ],
+        subcategories: [
+            { category: "calzado", name: "Zapatillas", value: "zapatillas" },
+            { category: "calzado", name: "Sandalias", value: "sandalias" },
+            { category: "calzado", name: "Botas y Borcegos", value: "botas" },
+            { category: "bolsos-y-mochilas", name: "Bandoleras", value: "bandoleras" },
+            { category: "bolsos-y-mochilas", name: "Carteras", value: "carteras" },
+            { category: "bolsos-y-mochilas", name: "Mochilas", value: "mochilas" },
+            { category: "accesorios", name: "Billeteras", value: "billeteras" },
+            { category: "accesorios", name: "Riñoneras", value: "rinoneras" },
+            { category: "accesorios", name: "Llaveros", value: "llaveros" }
+        ]
+    };
+
+    if (isUsingFirebase) {
+        try {
+            const doc = await dbFirestore.collection('config').doc('catalog').get();
+            if (doc.exists) {
+                return doc.data();
+            } else {
+                await dbFirestore.collection('config').doc('catalog').set(defaultCatalog);
+                return defaultCatalog;
+            }
+        } catch (e) {
+            console.error("Error fetching config from Firestore:", e);
+        }
+    }
+    
+    const local = localStorage.getItem('tosco_catalog_config');
+    if (local) {
+        return JSON.parse(local);
+    } else {
+        localStorage.setItem('tosco_catalog_config', JSON.stringify(defaultCatalog));
+        return defaultCatalog;
+    }
+}
+
+async function dbPutCatalogConfig(config) {
+    if (isUsingFirebase) {
+        await dbFirestore.collection('config').doc('catalog').set(config);
+    } else {
+        localStorage.setItem('tosco_catalog_config', JSON.stringify(config));
+    }
+}
+
+// CATALOG TAB CONTROLLER
+let isCatalogTabInitialized = false;
+
+async function initCatalogTabUI() {
+    CATALOG_CONFIG = await dbGetCatalogConfig();
+    
+    renderBrandsTable();
+    renderSubcategoriesTable();
+    renderSortingTable();
+
+    if (isCatalogTabInitialized) return;
+
+    // Brand file upload listener
+    const brandFileInput = document.getElementById('brand-banner-file');
+    const brandFilename = document.getElementById('brand-banner-filename');
+    const brandBannerUrl = document.getElementById('brand-banner-url');
+
+    brandFileInput.addEventListener('change', () => {
+        const file = brandFileInput.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                brandBannerUrl.value = ev.target.result;
+                brandFilename.innerText = file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Add Brand Form Submit
+    const brandForm = document.getElementById('brand-form');
+    brandForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('brand-name-input').value.trim();
+        const banner = brandBannerUrl.value.trim() || 'assets/hero_tosco.png';
+
+        if (CATALOG_CONFIG.brands.some(b => b.name.toLowerCase() === name.toLowerCase())) {
+            alert("Esta marca ya existe.");
+            return;
+        }
+
+        CATALOG_CONFIG.brands.push({ name, banner });
+        renderBrandsTable();
+        
+        // Reset form
+        brandForm.reset();
+        brandFilename.innerText = 'Sin banner';
+        brandBannerUrl.value = '';
+    });
+
+    // Add Subcategory Form Submit
+    const subcatForm = document.getElementById('subcategory-form');
+    subcatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const parent = document.getElementById('subcat-parent-select').value;
+        const name = document.getElementById('subcat-name-input').value.trim();
+        const val = document.getElementById('subcat-val-input').value.trim().toLowerCase();
+
+        if (CATALOG_CONFIG.subcategories.some(s => s.value === val && s.category === parent)) {
+            alert("Esta subcategoría ya existe para este padre.");
+            return;
+        }
+
+        CATALOG_CONFIG.subcategories.push({ category: parent, name, value: val });
+        renderSubcategoriesTable();
+        subcatForm.reset();
+    });
+
+    // Save All Catalog Config
+    const saveCatalogBtn = document.getElementById('save-catalog-config-btn');
+    saveCatalogBtn.addEventListener('click', async () => {
+        try {
+            // Save brands & subcategories
+            await dbPutCatalogConfig(CATALOG_CONFIG);
+
+            // Save product orders
+            const savePromises = ALL_PRODUCTS.map(p => {
+                const orderInput = document.getElementById(`sort-order-input-${p.id}`);
+                if (orderInput) {
+                    p.order = parseInt(orderInput.value) || 0;
+                }
+                return dbPutProduct(p);
+            });
+            await Promise.all(savePromises);
+
+            await refreshLocalState();
+            renderSortingTable();
+            alert("¡Cambios de catálogo guardados correctamente en la base de datos!");
+        } catch (err) {
+            console.error(err);
+            alert("Error al guardar la configuración del catálogo.");
+        }
+    });
+
+    isCatalogTabInitialized = true;
+}
+
+function renderBrandsTable() {
+    const tbody = document.getElementById('admin-brands-tbody');
+    tbody.innerHTML = '';
+
+    if (CATALOG_CONFIG.brands.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--gray-dark);">Sin marcas registradas.</td></tr>`;
+        return;
+    }
+
+    CATALOG_CONFIG.brands.forEach((brand, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><img src="${brand.banner}" alt="Banner" style="height:35px; width:70px; object-fit:cover; border-radius:4px;" onerror="this.src='/assets/hero_tosco.png'"></td>
+            <td style="font-weight:bold;">${brand.name}</td>
+            <td><button class="btn-table-action delete" onclick="deleteCatalogBrand(${idx})" style="padding:6px 10px; margin:0;"><i class="fa-regular fa-trash-can"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+window.deleteCatalogBrand = function(idx) {
+    if (!confirm(`¿Eliminar la marca "${CATALOG_CONFIG.brands[idx].name}"?`)) return;
+    CATALOG_CONFIG.brands.splice(idx, 1);
+    renderBrandsTable();
+};
+
+function renderSubcategoriesTable() {
+    const tbody = document.getElementById('admin-subcategories-tbody');
+    tbody.innerHTML = '';
+
+    if (CATALOG_CONFIG.subcategories.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--gray-dark);">Sin subcategorías registradas.</td></tr>`;
+        return;
+    }
+
+    CATALOG_CONFIG.subcategories.forEach((sub, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="text-transform:capitalize;">${sub.category.replace(/-/g, ' ')}</td>
+            <td><strong>${sub.name}</strong> <span style="font-size:10px; color:var(--gray-dark);">(${sub.value})</span></td>
+            <td><button class="btn-table-action delete" onclick="deleteCatalogSubcategory(${idx})" style="padding:6px 10px; margin:0;"><i class="fa-regular fa-trash-can"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+window.deleteCatalogSubcategory = function(idx) {
+    if (!confirm(`¿Eliminar la subcategoría "${CATALOG_CONFIG.subcategories[idx].name}"?`)) return;
+    CATALOG_CONFIG.subcategories.splice(idx, 1);
+    renderSubcategoriesTable();
+};
+
+function renderSortingTable() {
+    const tbody = document.getElementById('admin-sorting-tbody');
+    tbody.innerHTML = '';
+
+    // Sort active memory list first
+    ALL_PRODUCTS.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    if (ALL_PRODUCTS.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--gray-dark);">Sin productos cargados.</td></tr>`;
+        return;
+    }
+
+    ALL_PRODUCTS.forEach((p, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><img src="${p.image}" alt="Thumb" style="height:35px; width:35px; object-fit:cover; border-radius:4px;" onerror="this.src='/assets/hero_tosco.png'"></td>
+            <td style="font-weight:bold; font-size:13px;">${p.name}</td>
+            <td style="font-size:11px; color:var(--gray-dark);">${p.brand} | ${p.category}</td>
+            <td>
+                <input type="number" id="sort-order-input-${p.id}" value="${p.order || 0}" style="width:70px; padding:6px; border:1px solid var(--gray-medium); border-radius:4px; font-family:monospace; text-align:center;">
+            </td>
+            <td>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-table-action" onclick="moveProductOrder(${idx}, -1)" style="padding:6px 10px; margin:0;"><i class="fa-solid fa-arrow-up"></i> Subir</button>
+                    <button class="btn-table-action" onclick="moveProductOrder(${idx}, 1)" style="padding:6px 10px; margin:0;"><i class="fa-solid fa-arrow-down"></i> Bajar</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+window.moveProductOrder = function(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= ALL_PRODUCTS.length) return;
+
+    // Swap positions
+    const temp = ALL_PRODUCTS[index];
+    ALL_PRODUCTS[index] = ALL_PRODUCTS[targetIndex];
+    ALL_PRODUCTS[targetIndex] = temp;
+
+    // Re-assign order numbers sequentially
+    ALL_PRODUCTS.forEach((p, idx) => {
+        p.order = idx * 10;
+        const input = document.getElementById(`sort-order-input-${p.id}`);
+        if (input) input.value = idx * 10;
+    });
+
+    renderSortingTable();
 };
