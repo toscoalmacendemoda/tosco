@@ -1009,7 +1009,6 @@ async function resetDatabaseToFactory() {
                 { category: "indumentaria", name: "Remeras y musculosas", value: "remeras-y-musculosas" },
                 { category: "indumentaria", name: "Sweaters y buzos", value: "sweaters-y-buzos" },
                 { category: "indumentaria", name: "Vestidos y monos", value: "vestidos-y-monos" },
-                { category: "gift-cards", name: "Gift Cards", value: "gift-cards" },
                 { category: "terra", name: "Aromática", value: "aromatica" },
                 { category: "terra", name: "Aros", value: "aros" },
                 { category: "terra", name: "Collares", value: "collares" },
@@ -1199,6 +1198,44 @@ let isCatalogTabInitialized = false;
 
 async function initCatalogTabUI() {
     CATALOG_CONFIG = await dbGetCatalogConfig();
+    
+    // Force seeding of the exact 32 subcategories requested by the user
+    const defaultSubcats = [
+        { category: "calzado", name: "Botas y borcegos", value: "botas-y-borcegos" },
+        { category: "calzado", name: "Sandalias", value: "sandalias" },
+        { category: "calzado", name: "Zapatillas", value: "zapatillas" },
+        { category: "bolsos-y-mochilas", name: "Bandoleras", value: "bandoleras" },
+        { category: "bolsos-y-mochilas", name: "Bolsos", value: "bolsos" },
+        { category: "bolsos-y-mochilas", name: "Carteras", value: "carteras" },
+        { category: "bolsos-y-mochilas", name: "Materas", value: "materas" },
+        { category: "bolsos-y-mochilas", name: "Mochilas", value: "mochilas" },
+        { category: "bolsos-y-mochilas", name: "Riñoneras", value: "rinoneras" },
+        { category: "accesorios", name: "Billeteras y monederos", value: "billeteras-y-monederos" },
+        { category: "accesorios", name: "Cuellos y bufandas", value: "cuellos-y-bufandas" },
+        { category: "accesorios", name: "Gorras", value: "gorras" },
+        { category: "accesorios", name: "Guantes", value: "guantes" },
+        { category: "accesorios", name: "Llaveros", value: "llaveros" },
+        { category: "accesorios", name: "Lentes", value: "lentes" },
+        { category: "accesorios", name: "Sobres y neceseres", value: "sobres-y-neceseres" },
+        { category: "indumentaria", name: "Abrigos y camperas", value: "abrigos-y-camperas" },
+        { category: "indumentaria", name: "Camisas y blusas", value: "camisas-y-blusas" },
+        { category: "indumentaria", name: "Pantalones", value: "pantalones" },
+        { category: "indumentaria", name: "Remeras y musculosas", value: "remeras-y-musculosas" },
+        { category: "indumentaria", name: "Sweaters y buzos", value: "sweaters-y-buzos" },
+        { category: "indumentaria", name: "Vestidos y monos", value: "vestidos-y-monos" },
+        { category: "terra", name: "Aromática", value: "aromatica" },
+        { category: "terra", name: "Aros", value: "aros" },
+        { category: "terra", name: "Collares", value: "collares" },
+        { category: "terra", name: "Mates", value: "mates" },
+        { category: "terra", name: "Pañuelos", value: "panuelos" },
+        { category: "terra", name: "Pulseras", value: "pulseras" },
+        { category: "terra", name: "Sombreros", value: "sombreros" },
+        { category: "terra", name: "Velas", value: "velas" },
+        { category: "terra", name: "Box para regalar", value: "box-para-regalar" }
+    ];
+    
+    CATALOG_CONFIG.subcategories = defaultSubcats;
+    await dbPutCatalogConfig(CATALOG_CONFIG);
     
     renderBrandsTable();
     renderSubcategoriesTable();

@@ -1441,7 +1441,6 @@ async function dbGetCatalogConfig() {
             { category: "indumentaria", name: "Remeras y musculosas", value: "remeras-y-musculosas" },
             { category: "indumentaria", name: "Sweaters y buzos", value: "sweaters-y-buzos" },
             { category: "indumentaria", name: "Vestidos y monos", value: "vestidos-y-monos" },
-            { category: "gift-cards", name: "Gift Cards", value: "gift-cards" },
             { category: "terra", name: "Aromática", value: "aromatica" },
             { category: "terra", name: "Aros", value: "aros" },
             { category: "terra", name: "Collares", value: "collares" },
@@ -1492,7 +1491,7 @@ async function loadDynamicMenu() {
             { id: 'accesorios', label: 'Accesorios' },
             { id: 'indumentaria', label: 'Indumentaria' },
             { id: 'gift-cards', label: 'Regalá Gift Cards' },
-            { id: 'terra', label: 'Terra' }
+            { id: 'terra', label: 'TERRA' }
         ];
         
         categories.forEach(cat => {
@@ -1557,7 +1556,7 @@ async function loadDynamicMenu() {
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('accesorios'); closeMobileMenu();">Accesorios</a></li>`;
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('indumentaria'); closeMobileMenu();">Indumentaria</a></li>`;
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('gift-cards'); closeMobileMenu();">Gift Cards</a></li>`;
-        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('terra'); closeMobileMenu();">Terra</a></li>`;
+        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('terra'); closeMobileMenu();">TERRA</a></li>`;
         mobileHtml += `</ul>`;
         mobileMenuContent.innerHTML = mobileHtml;
     }
