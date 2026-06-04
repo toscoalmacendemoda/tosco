@@ -971,7 +971,7 @@ window.checkoutAlert = function() {
 async function completeOrderPlacement(orderData) {
     try {
         // Ensure DB is ready
-        if (!db) await dbInit();
+        if (!isUsingFirebase && !db) await dbInit();
         
         // Save order to IndexedDB
         await dbPutOrder(orderData);

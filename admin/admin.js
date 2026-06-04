@@ -924,18 +924,28 @@ async function resetDatabaseToFactory() {
     
     try {
         await dbClearAll();
-        // Load initial seed
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        INITIAL_PRODUCTS.forEach(p => {
-            if (p.stock === undefined) p.stock = 10;
-            store.put(p);
-        });
-        
-        // Wait transaction complete
-        await new Promise((resolve) => {
-            transaction.oncomplete = () => resolve();
-        });
+        if (isUsingFirebase) {
+            const batch = dbFirestore.batch();
+            INITIAL_PRODUCTS.forEach(p => {
+                if (p.stock === undefined) p.stock = 10;
+                const docRef = dbFirestore.collection('products').doc(String(p.id));
+                batch.set(docRef, p);
+            });
+            await batch.commit();
+        } else {
+            // Load initial seed
+            const transaction = db.transaction('products', 'readwrite');
+            const store = transaction.objectStore('products');
+            INITIAL_PRODUCTS.forEach(p => {
+                if (p.stock === undefined) p.stock = 10;
+                store.put(p);
+            });
+            
+            // Wait transaction complete
+            await new Promise((resolve) => {
+                transaction.oncomplete = () => resolve();
+            });
+        }
         
         await refreshLocalState();
         renderAdminTable();
