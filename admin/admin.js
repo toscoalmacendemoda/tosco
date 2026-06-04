@@ -125,8 +125,45 @@ function initDOMElements() {
 }
 
 
-// INDEXEDDB CONTROLLER
-function dbInit() {
+let isUsingFirebase = false;
+let dbFirestore = null;
+
+// INDEXEDDB / FIREBASE CONTROLLER
+async function dbInit() {
+    try {
+        const res = await fetch('/api/firebase-config');
+        if (!res.ok) throw new Error("Could not fetch Firebase config");
+        const config = await res.json();
+        
+        if (config.apiKey && config.projectId) {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(config);
+            }
+            dbFirestore = firebase.firestore();
+            isUsingFirebase = true;
+            console.log("Using Firebase Firestore database.");
+
+            // Check seed for Firebase
+            const snapshot = await dbFirestore.collection('products').limit(1).get();
+            if (snapshot.empty) {
+                console.log("Seeding Firebase Firestore with initial products...");
+                const batch = dbFirestore.batch();
+                INITIAL_PRODUCTS.forEach(p => {
+                    if (p.stock === undefined) p.stock = 10;
+                    const docRef = dbFirestore.collection('products').doc(String(p.id));
+                    batch.set(docRef, p);
+                });
+                await batch.commit();
+                console.log("Firebase Firestore database seeded successfully.");
+            }
+            return;
+        }
+    } catch (err) {
+        console.error("Firebase initialization failed, falling back to IndexedDB:", err);
+    }
+
+    // Fallback to IndexedDB
+    isUsingFirebase = false;
     return new Promise((resolve, reject) => {
         const request = indexedDB.open('ToscoStoreDB', 2); // DB Version 2
 
@@ -151,86 +188,130 @@ function dbInit() {
     });
 }
 
-function dbGetAllProducts() {
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readonly');
-        const store = transaction.objectStore('products');
-        const request = store.getAll();
+async function dbGetAllProducts() {
+    if (isUsingFirebase) {
+        const snapshot = await dbFirestore.collection('products').get();
+        const products = [];
+        snapshot.forEach(doc => {
+            products.push(doc.data());
+        });
+        return products;
+    } else {
+        return new Promise((resolve) => {
+            const transaction = db.transaction('products', 'readonly');
+            const store = transaction.objectStore('products');
+            const request = store.getAll();
 
-        request.onsuccess = () => {
-            resolve(request.result);
-        };
-    });
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+        });
+    }
 }
 
-function dbPutProduct(product) {
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        const request = store.put(product);
+async function dbPutProduct(product) {
+    if (isUsingFirebase) {
+        await dbFirestore.collection('products').doc(String(product.id)).set(product);
+    } else {
+        return new Promise((resolve) => {
+            const transaction = db.transaction('products', 'readwrite');
+            const store = transaction.objectStore('products');
+            const request = store.put(product);
 
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+            request.onsuccess = () => {
+                resolve();
+            };
+        });
+    }
 }
 
-function dbDeleteProduct(id) {
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        const request = store.delete(id);
+async function dbDeleteProduct(id) {
+    if (isUsingFirebase) {
+        await dbFirestore.collection('products').doc(String(id)).delete();
+    } else {
+        return new Promise((resolve) => {
+            const transaction = db.transaction('products', 'readwrite');
+            const store = transaction.objectStore('products');
+            const request = store.delete(id);
 
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+            request.onsuccess = () => {
+                resolve();
+            };
+        });
+    }
 }
 
-function dbClearAll() {
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        const request = store.clear();
+async function dbClearAll() {
+    if (isUsingFirebase) {
+        const snapshot = await dbFirestore.collection('products').get();
+        const batch = dbFirestore.batch();
+        snapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+    } else {
+        return new Promise((resolve) => {
+            const transaction = db.transaction('products', 'readwrite');
+            const store = transaction.objectStore('products');
+            const request = store.clear();
 
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+            request.onsuccess = () => {
+                resolve();
+            };
+        });
+    }
 }
 
-// IndexedDB Orders helpers
-function dbGetAllOrders() {
-    return new Promise((resolve) => {
-        const transaction = db.transaction('orders', 'readonly');
-        const store = transaction.objectStore('orders');
-        const request = store.getAll();
-        request.onsuccess = () => {
-            resolve(request.result);
-        };
-    });
+// IndexedDB / Firebase Orders helpers
+async function dbGetAllOrders() {
+    if (isUsingFirebase) {
+        const snapshot = await dbFirestore.collection('orders').get();
+        const orders = [];
+        snapshot.forEach(doc => {
+            orders.push(doc.data());
+        });
+        orders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        return orders;
+    } else {
+        return new Promise((resolve) => {
+            const transaction = db.transaction('orders', 'readonly');
+            const store = transaction.objectStore('orders');
+            const request = store.getAll();
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+        });
+    }
 }
 
-function dbPutOrder(order) {
-    return new Promise((resolve) => {
-        const transaction = db.transaction('orders', 'readwrite');
-        const store = transaction.objectStore('orders');
-        const request = store.put(order);
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+async function dbPutOrder(order) {
+    if (isUsingFirebase) {
+        await dbFirestore.collection('orders').doc(String(order.id)).set(order);
+    } else {
+        return new Promise((resolve) => {
+            const transaction = db.transaction('orders', 'readwrite');
+            const store = transaction.objectStore('orders');
+            const request = store.put(order);
+            request.onsuccess = () => {
+                resolve();
+            };
+        });
+    }
 }
 
-function dbDeleteOrder(id) {
-    return new Promise((resolve) => {
-        const transaction = db.transaction('orders', 'readwrite');
-        const store = transaction.objectStore('orders');
-        const request = store.delete(id);
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+async function dbDeleteOrder(id) {
+    if (isUsingFirebase) {
+        await dbFirestore.collection('orders').doc(String(id)).delete();
+    } else {
+        return new Promise((resolve) => {
+            const transaction = db.transaction('orders', 'readwrite');
+            const store = transaction.objectStore('orders');
+            const request = store.delete(id);
+            request.onsuccess = () => {
+                resolve();
+            };
+        });
+    }
 }
 
 // INITIALIZE APP AND LISTENERS
