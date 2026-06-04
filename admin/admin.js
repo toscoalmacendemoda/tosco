@@ -252,7 +252,7 @@ function initApp() {
             const userVal = usernameInput.value.trim().toLowerCase();
             const passVal = passwordInput.value.trim();
             
-            if (userVal === 'tosco' && passVal === 'admin123') {
+            if (userVal === 'admin' && passVal === 'Mony123') {
                 sessionStorage.setItem('tosco_admin_logged', 'true');
                 errorMessage.style.display = 'none';
                 showAdminView();
