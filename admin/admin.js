@@ -490,8 +490,8 @@ function setupAdminEventListeners() {
         tabAppearancePane.style.display = 'flex';
 
         // Load current config
-        logoPreviewImg.src = localStorage.getItem('tosco_custom_logo') || '../assets/logo.webp';
-        heroPreviewImg.src = localStorage.getItem('tosco_custom_hero') || '../assets/hero_tosco.png';
+        logoPreviewImg.src = localStorage.getItem('tosco_custom_logo') || '/assets/logo.webp';
+        heroPreviewImg.src = localStorage.getItem('tosco_custom_hero') || '/assets/hero_tosco.png';
         configTickerInput.value = localStorage.getItem('tosco_custom_ticker') || '3 CUOTAS SIN INTERÉS | ENVÍO GRATIS SUPERANDO LOS $250.000';
         logoPreviewName.innerText = "Ningún archivo seleccionado";
         heroPreviewName.innerText = "Ningún archivo seleccionado";
@@ -668,7 +668,7 @@ function renderAdminTable() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><img src="${p.image}" alt="${p.name}" class="admin-thumb" onerror="this.src='../assets/hero_tosco.png'"></td>
+            <td><img src="${p.image}" alt="${p.name}" class="admin-thumb" onerror="this.src='/assets/hero_tosco.png'"></td>
             <td style="font-weight: bold;">${p.name}</td>
             <td>${p.brand} (${p.category} / ${p.subcategory})</td>
             <td>
@@ -851,7 +851,7 @@ window.openProductModal = function(productId) {
         modalTitle.innerText = "Agregar Nuevo Producto";
         productForm.reset();
         formProductId.value = '';
-        formImagePreview.src = '../assets/hero_tosco.png';
+        formImagePreview.src = '/assets/hero_tosco.png';
         formImage.value = '';
         
         // Default rows for shoe/cloth sizes
