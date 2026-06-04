@@ -220,7 +220,7 @@ function applyCustomAppearance() {
     }
 }
 
-function checkStoreStatus() {
+async function checkStoreStatus() {
     const storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
     const maintenanceOverlay = document.getElementById('maintenance-overlay');
     if (maintenanceOverlay) {
@@ -230,6 +230,14 @@ function checkStoreStatus() {
         } else {
             maintenanceOverlay.style.display = 'none';
             document.body.style.overflow = '';
+        }
+    }
+    // Refresh products catalog when tab gets focus to sync admin changes
+    if (db) {
+        try {
+            await refreshLocalState();
+        } catch (err) {
+            console.error("Error refreshing state on focus:", err);
         }
     }
 }
