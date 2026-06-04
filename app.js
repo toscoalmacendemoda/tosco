@@ -735,6 +735,8 @@ window.setCatalogFilter = function(category) {
         if (category === 'accesorios' && btn.innerText.toLowerCase().includes('accesorios')) btn.classList.add('active');
         if (category === 'indumentaria' && btn.innerText.toLowerCase().includes('indumentaria')) btn.classList.add('active');
         if (category === 'terra' && btn.innerText.toLowerCase().includes('terra')) btn.classList.add('active');
+        if (category === 'gift-cards' && btn.innerText.toLowerCase().includes('gift')) btn.classList.add('active');
+        if (category === 'outlet' && btn.innerText.toLowerCase().includes('outlet')) btn.classList.add('active');
     });
 
     renderProducts();
@@ -1491,7 +1493,8 @@ async function loadDynamicMenu() {
             { id: 'accesorios', label: 'Accesorios' },
             { id: 'indumentaria', label: 'Indumentaria' },
             { id: 'gift-cards', label: 'Regalá Gift Cards' },
-            { id: 'terra', label: 'TERRA' }
+            { id: 'terra', label: 'TERRA' },
+            { id: 'outlet', label: 'OUTLET' }
         ];
         
         categories.forEach(cat => {
@@ -1557,6 +1560,7 @@ async function loadDynamicMenu() {
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('indumentaria'); closeMobileMenu();">Indumentaria</a></li>`;
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('gift-cards'); closeMobileMenu();">Gift Cards</a></li>`;
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('terra'); closeMobileMenu();">TERRA</a></li>`;
+        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('outlet'); closeMobileMenu();">OUTLET</a></li>`;
         mobileHtml += `</ul>`;
         mobileMenuContent.innerHTML = mobileHtml;
     }
