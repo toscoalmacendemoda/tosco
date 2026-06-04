@@ -1459,7 +1459,12 @@ async function dbGetCatalogConfig() {
         try {
             const doc = await dbFirestore.collection('config').doc('catalog').get();
             if (doc.exists) {
-                return doc.data();
+                const data = doc.data();
+                if (!data.subcategories || data.subcategories.length < defaultCatalog.subcategories.length) {
+                    await dbFirestore.collection('config').doc('catalog').set(defaultCatalog);
+                    return defaultCatalog;
+                }
+                return data;
             } else {
                 await dbFirestore.collection('config').doc('catalog').set(defaultCatalog);
                 return defaultCatalog;
