@@ -249,8 +249,8 @@ function initApp() {
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const userVal = usernameInput.value.trim();
-            const passVal = passwordInput.value;
+            const userVal = usernameInput.value.trim().toLowerCase();
+            const passVal = passwordInput.value.trim();
             
             if (userVal === 'tosco' && passVal === 'admin123') {
                 sessionStorage.setItem('tosco_admin_logged', 'true');
