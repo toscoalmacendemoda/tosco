@@ -287,10 +287,32 @@ function applyCustomAppearance() {
 }
 
 async function checkStoreStatus() {
-    const storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
+    // Check if the URL has the preview parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('preview') === 'true') {
+        localStorage.setItem('tosco_preview_mode', 'true');
+    }
+
+    const isPreview = localStorage.getItem('tosco_preview_mode') === 'true';
+    let storeOnline = true;
+
+    if (isUsingFirebase) {
+        try {
+            const doc = await dbFirestore.collection('config').doc('store').get();
+            if (doc.exists) {
+                storeOnline = doc.data().online !== false;
+            }
+        } catch (e) {
+            console.error("Error fetching store status:", e);
+            storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
+        }
+    } else {
+        storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
+    }
+
     const maintenanceOverlay = document.getElementById('maintenance-overlay');
     if (maintenanceOverlay) {
-        if (!storeOnline) {
+        if (!storeOnline && !isPreview) {
             maintenanceOverlay.style.display = 'flex';
             document.body.style.overflow = 'hidden';
         } else {

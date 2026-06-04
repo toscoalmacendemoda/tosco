@@ -393,7 +393,7 @@ function setupAdminEventListeners() {
     // Store Status Toggle Handler
     const storeStatusToggleBtn = document.getElementById('store-status-toggle-btn');
     if (storeStatusToggleBtn) {
-        let storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
+        let storeOnline = true;
         
         const updateToggleUI = () => {
             if (storeOnline) {
@@ -405,11 +405,36 @@ function setupAdminEventListeners() {
             }
         };
         
-        updateToggleUI();
+        const fetchStatus = async () => {
+            if (isUsingFirebase) {
+                try {
+                    const doc = await dbFirestore.collection('config').doc('store').get();
+                    if (doc.exists) {
+                        storeOnline = doc.data().online !== false;
+                    } else {
+                        storeOnline = true;
+                    }
+                } catch (e) {
+                    storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
+                }
+            } else {
+                storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
+            }
+            updateToggleUI();
+        };
+        fetchStatus();
         
-        storeStatusToggleBtn.addEventListener('click', () => {
+        storeStatusToggleBtn.addEventListener('click', async () => {
             storeOnline = !storeOnline;
-            localStorage.setItem('tosco_store_online', storeOnline ? 'true' : 'false');
+            if (isUsingFirebase) {
+                try {
+                    await dbFirestore.collection('config').doc('store').set({ online: storeOnline });
+                } catch (e) {
+                    console.error(e);
+                }
+            } else {
+                localStorage.setItem('tosco_store_online', storeOnline ? 'true' : 'false');
+            }
             updateToggleUI();
         });
     }
