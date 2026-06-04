@@ -238,7 +238,7 @@ function initApp() {
     initDOMElements();
 
     // Check authentication first
-    const isLogged = sessionStorage.getItem('tosco_admin_logged') === 'true';
+    const isLogged = localStorage.getItem('tosco_admin_logged') === 'true';
     if (isLogged) {
         showAdminView();
     } else {
@@ -253,7 +253,7 @@ function initApp() {
             const passVal = passwordInput.value.trim();
             
             if (userVal === 'admin' && passVal === 'Mony123') {
-                sessionStorage.setItem('tosco_admin_logged', 'true');
+                localStorage.setItem('tosco_admin_logged', 'true');
                 errorMessage.style.display = 'none';
                 showAdminView();
             } else {
@@ -265,7 +265,7 @@ function initApp() {
     // Bind logout action
     if (adminLogoutBtn) {
         adminLogoutBtn.addEventListener('click', () => {
-            sessionStorage.removeItem('tosco_admin_logged');
+            localStorage.removeItem('tosco_admin_logged');
             showLoginView();
         });
     }
