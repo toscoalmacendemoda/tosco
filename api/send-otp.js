@@ -108,8 +108,7 @@ module.exports = async (req, res) => {
             success: true,
             message: 'Código enviado correctamente.',
             sentMethod: sentMethod,
-            // Return code for sandbox simulation if no email client is configured
-            code: sentMethod ? null : otp 
+            code: null 
         });
 
     } catch (error) {

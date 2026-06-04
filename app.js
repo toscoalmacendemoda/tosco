@@ -530,12 +530,7 @@ function setupEventListeners() {
                     authOtpForm.style.display = 'flex';
                     authErrorMsg.style.display = 'none';
 
-                    // For demo/sandbox simulation if Resend API key is not configured, show code in alert
-                    if (data.mode === 'sandbox_simulation' || data.code) {
-                        alert(`[MODO PRUEBA] Tu código de verificación OTP es: ${data.code}`);
-                    } else {
-                        alert('Te hemos enviado un código de verificación de 6 dígitos a tu correo electrónico.');
-                    }
+                    alert('Te hemos enviado un código de verificación de 6 dígitos a tu correo electrónico.');
                 } else {
                     const err = await response.json();
                     alert(err.error || 'Error al enviar código.');
@@ -1424,15 +1419,38 @@ async function dbGetCatalogConfig() {
             { name: "Chimmy Churry", banner: "assets/banner_chimmy.webp" }
         ],
         subcategories: [
-            { category: "calzado", name: "Zapatillas", value: "zapatillas" },
+            { category: "calzado", name: "Botas y borcegos", value: "botas-y-borcegos" },
             { category: "calzado", name: "Sandalias", value: "sandalias" },
-            { category: "calzado", name: "Botas y Borcegos", value: "botas" },
+            { category: "calzado", name: "Zapatillas", value: "zapatillas" },
             { category: "bolsos-y-mochilas", name: "Bandoleras", value: "bandoleras" },
+            { category: "bolsos-y-mochilas", name: "Bolsos", value: "bolsos" },
             { category: "bolsos-y-mochilas", name: "Carteras", value: "carteras" },
+            { category: "bolsos-y-mochilas", name: "Materas", value: "materas" },
             { category: "bolsos-y-mochilas", name: "Mochilas", value: "mochilas" },
-            { category: "accesorios", name: "Billeteras", value: "billeteras" },
-            { category: "accesorios", name: "Riñoneras", value: "rinoneras" },
-            { category: "accesorios", name: "Llaveros", value: "llaveros" }
+            { category: "bolsos-y-mochilas", name: "Riñoneras", value: "rinoneras" },
+            { category: "accesorios", name: "Billeteras y monederos", value: "billeteras-y-monederos" },
+            { category: "accesorios", name: "Cuellos y bufandas", value: "cuellos-y-bufandas" },
+            { category: "accesorios", name: "Gorras", value: "gorras" },
+            { category: "accesorios", name: "Guantes", value: "guantes" },
+            { category: "accesorios", name: "Llaveros", value: "llaveros" },
+            { category: "accesorios", name: "Lentes", value: "lentes" },
+            { category: "accesorios", name: "Sobres y neceseres", value: "sobres-y-neceseres" },
+            { category: "indumentaria", name: "Abrigos y camperas", value: "abrigos-y-camperas" },
+            { category: "indumentaria", name: "Camisas y blusas", value: "camisas-y-blusas" },
+            { category: "indumentaria", name: "Pantalones", value: "pantalones" },
+            { category: "indumentaria", name: "Remeras y musculosas", value: "remeras-y-musculosas" },
+            { category: "indumentaria", name: "Sweaters y buzos", value: "sweaters-y-buzos" },
+            { category: "indumentaria", name: "Vestidos y monos", value: "vestidos-y-monos" },
+            { category: "gift-cards", name: "Gift Cards", value: "gift-cards" },
+            { category: "terra", name: "Aromática", value: "aromatica" },
+            { category: "terra", name: "Aros", value: "aros" },
+            { category: "terra", name: "Collares", value: "collares" },
+            { category: "terra", name: "Mates", value: "mates" },
+            { category: "terra", name: "Pañuelos", value: "panuelos" },
+            { category: "terra", name: "Pulseras", value: "pulseras" },
+            { category: "terra", name: "Sombreros", value: "sombreros" },
+            { category: "terra", name: "Velas", value: "velas" },
+            { category: "terra", name: "Box para regalar", value: "box-para-regalar" }
         ]
     };
 
@@ -1442,6 +1460,7 @@ async function dbGetCatalogConfig() {
             if (doc.exists) {
                 return doc.data();
             } else {
+                await dbFirestore.collection('config').doc('catalog').set(defaultCatalog);
                 return defaultCatalog;
             }
         } catch (e) {
@@ -1450,7 +1469,12 @@ async function dbGetCatalogConfig() {
     }
     
     const local = localStorage.getItem('tosco_catalog_config');
-    return local ? JSON.parse(local) : defaultCatalog;
+    if (local) {
+        return JSON.parse(local);
+    } else {
+        localStorage.setItem('tosco_catalog_config', JSON.stringify(defaultCatalog));
+        return defaultCatalog;
+    }
 }
 
 // DYNAMIC MENU LOADER
@@ -1464,30 +1488,41 @@ async function loadDynamicMenu() {
         
         const categories = [
             { id: 'calzado', label: 'Calzado' },
-            { id: 'bolsos-y-mochilas', label: 'Bolsos y Mochilas' },
-            { id: 'accesorios', label: 'Accesorios' }
+            { id: 'bolsos-y-mochilas', label: 'Carteras, Bolsos y Mochilas' },
+            { id: 'accesorios', label: 'Accesorios' },
+            { id: 'indumentaria', label: 'Indumentaria' },
+            { id: 'gift-cards', label: 'Regalá Gift Cards' },
+            { id: 'terra', label: 'Terra' }
         ];
         
         categories.forEach(cat => {
             const subcats = catalogConfig.subcategories.filter(s => s.category === cat.id);
             const navItem = document.createElement('div');
             navItem.className = 'nav-item';
-            navItem.innerHTML = `${cat.label} <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>`;
             
-            const dropdown = document.createElement('div');
-            dropdown.className = 'nav-dropdown';
-            subcats.forEach(sub => {
-                const a = document.createElement('a');
-                a.href = '#';
-                a.className = 'dropdown-link';
-                a.innerText = sub.name;
-                a.onclick = (e) => {
+            if (subcats.length > 0) {
+                navItem.innerHTML = `${cat.label} <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>`;
+                const dropdown = document.createElement('div');
+                dropdown.className = 'nav-dropdown';
+                subcats.forEach(sub => {
+                    const a = document.createElement('a');
+                    a.href = '#';
+                    a.className = 'dropdown-link';
+                    a.innerText = sub.name;
+                    a.onclick = (e) => {
+                        e.preventDefault();
+                        setCatalogSubcategory(sub.value);
+                    };
+                    dropdown.appendChild(a);
+                });
+                navItem.appendChild(dropdown);
+            } else {
+                navItem.innerHTML = `<a href="#" style="color:inherit; text-decoration:none;">${cat.label}</a>`;
+                navItem.onclick = (e) => {
                     e.preventDefault();
-                    setCatalogSubcategory(sub.value);
+                    setCatalogFilter(cat.id);
                 };
-                dropdown.appendChild(a);
-            });
-            navItem.appendChild(dropdown);
+            }
             desktopNav.appendChild(navItem);
         });
         
@@ -1510,17 +1545,6 @@ async function loadDynamicMenu() {
         });
         brandsNavItem.appendChild(brandsDropdown);
         desktopNav.appendChild(brandsNavItem);
-        
-        // Add Terra link
-        const terraLink = document.createElement('a');
-        terraLink.href = '#';
-        terraLink.className = 'nav-item';
-        terraLink.innerText = 'Terra';
-        terraLink.onclick = (e) => {
-            e.preventDefault();
-            setCatalogFilter('terra');
-        };
-        desktopNav.appendChild(terraLink);
     }
 
     // 2. Render mobile menu list
@@ -1529,9 +1553,10 @@ async function loadDynamicMenu() {
         let mobileHtml = `<ul class="footer-links" style="font-size: 16px; line-height: 2.5;">`;
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('all'); closeMobileMenu();">Inicio</a></li>`;
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('calzado'); closeMobileMenu();">Calzado</a></li>`;
-        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('bolsos-y-mochilas'); closeMobileMenu();">Bolsos y Mochilas</a></li>`;
+        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('bolsos-y-mochilas'); closeMobileMenu();">Carteras, Bolsos y Mochilas</a></li>`;
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('accesorios'); closeMobileMenu();">Accesorios</a></li>`;
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('indumentaria'); closeMobileMenu();">Indumentaria</a></li>`;
+        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('gift-cards'); closeMobileMenu();">Gift Cards</a></li>`;
         mobileHtml += `<li><a href="#" onclick="setCatalogFilter('terra'); closeMobileMenu();">Terra</a></li>`;
         mobileHtml += `</ul>`;
         mobileMenuContent.innerHTML = mobileHtml;

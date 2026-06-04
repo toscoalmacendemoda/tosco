@@ -977,7 +977,53 @@ async function resetDatabaseToFactory() {
     
     try {
         await dbClearAll();
+        
+        // Define default catalog config to write
+        const defaultCatalog = {
+            brands: [
+                { name: "Puro", banner: "assets/banner_puro.webp" },
+                { name: "Antonia Agosti", banner: "assets/banner_agosti.webp" },
+                { name: "Winndia", banner: "assets/banner_winndia.webp" },
+                { name: "Chimmy Churry", banner: "assets/banner_chimmy.webp" }
+            ],
+            subcategories: [
+                { category: "calzado", name: "Botas y borcegos", value: "botas-y-borcegos" },
+                { category: "calzado", name: "Sandalias", value: "sandalias" },
+                { category: "calzado", name: "Zapatillas", value: "zapatillas" },
+                { category: "bolsos-y-mochilas", name: "Bandoleras", value: "bandoleras" },
+                { category: "bolsos-y-mochilas", name: "Bolsos", value: "bolsos" },
+                { category: "bolsos-y-mochilas", name: "Carteras", value: "carteras" },
+                { category: "bolsos-y-mochilas", name: "Materas", value: "materas" },
+                { category: "bolsos-y-mochilas", name: "Mochilas", value: "mochilas" },
+                { category: "bolsos-y-mochilas", name: "Riñoneras", value: "rinoneras" },
+                { category: "accesorios", name: "Billeteras y monederos", value: "billeteras-y-monederos" },
+                { category: "accesorios", name: "Cuellos y bufandas", value: "cuellos-y-bufandas" },
+                { category: "accesorios", name: "Gorras", value: "gorras" },
+                { category: "accesorios", name: "Guantes", value: "guantes" },
+                { category: "accesorios", name: "Llaveros", value: "llaveros" },
+                { category: "accesorios", name: "Lentes", value: "lentes" },
+                { category: "accesorios", name: "Sobres y neceseres", value: "sobres-y-neceseres" },
+                { category: "indumentaria", name: "Abrigos y camperas", value: "abrigos-y-camperas" },
+                { category: "indumentaria", name: "Camisas y blusas", value: "camisas-y-blusas" },
+                { category: "indumentaria", name: "Pantalones", value: "pantalones" },
+                { category: "indumentaria", name: "Remeras y musculosas", value: "remeras-y-musculosas" },
+                { category: "indumentaria", name: "Sweaters y buzos", value: "sweaters-y-buzos" },
+                { category: "indumentaria", name: "Vestidos y monos", value: "vestidos-y-monos" },
+                { category: "gift-cards", name: "Gift Cards", value: "gift-cards" },
+                { category: "terra", name: "Aromática", value: "aromatica" },
+                { category: "terra", name: "Aros", value: "aros" },
+                { category: "terra", name: "Collares", value: "collares" },
+                { category: "terra", name: "Mates", value: "mates" },
+                { category: "terra", name: "Pañuelos", value: "panuelos" },
+                { category: "terra", name: "Pulseras", value: "pulseras" },
+                { category: "terra", name: "Sombreros", value: "sombreros" },
+                { category: "terra", name: "Velas", value: "velas" },
+                { category: "terra", name: "Box para regalar", value: "box-para-regalar" }
+            ]
+        };
+
         if (isUsingFirebase) {
+            // Seed products
             const batch = dbFirestore.batch();
             INITIAL_PRODUCTS.forEach(p => {
                 if (p.stock === undefined) p.stock = 10;
@@ -985,6 +1031,9 @@ async function resetDatabaseToFactory() {
                 batch.set(docRef, p);
             });
             await batch.commit();
+            
+            // Seed catalog config
+            await dbFirestore.collection('config').doc('catalog').set(defaultCatalog);
         } else {
             // Load initial seed
             const transaction = db.transaction('products', 'readwrite');
@@ -998,11 +1047,13 @@ async function resetDatabaseToFactory() {
             await new Promise((resolve) => {
                 transaction.oncomplete = () => resolve();
             });
+
+            localStorage.setItem('tosco_catalog_config', JSON.stringify(defaultCatalog));
         }
         
         await refreshLocalState();
         renderAdminTable();
-        alert("¡Base de datos restablecida con éxito!");
+        alert("¡Base de datos y catálogo de categorías restablecidos con éxito!");
     } catch (err) {
         console.error("Error resetting DB: ", err);
         alert("Ocurrió un error al resetear.");
@@ -1077,15 +1128,38 @@ async function dbGetCatalogConfig() {
             { name: "Chimmy Churry", banner: "assets/banner_chimmy.webp" }
         ],
         subcategories: [
-            { category: "calzado", name: "Zapatillas", value: "zapatillas" },
+            { category: "calzado", name: "Botas y borcegos", value: "botas-y-borcegos" },
             { category: "calzado", name: "Sandalias", value: "sandalias" },
-            { category: "calzado", name: "Botas y Borcegos", value: "botas" },
+            { category: "calzado", name: "Zapatillas", value: "zapatillas" },
             { category: "bolsos-y-mochilas", name: "Bandoleras", value: "bandoleras" },
+            { category: "bolsos-y-mochilas", name: "Bolsos", value: "bolsos" },
             { category: "bolsos-y-mochilas", name: "Carteras", value: "carteras" },
+            { category: "bolsos-y-mochilas", name: "Materas", value: "materas" },
             { category: "bolsos-y-mochilas", name: "Mochilas", value: "mochilas" },
-            { category: "accesorios", name: "Billeteras", value: "billeteras" },
-            { category: "accesorios", name: "Riñoneras", value: "rinoneras" },
-            { category: "accesorios", name: "Llaveros", value: "llaveros" }
+            { category: "bolsos-y-mochilas", name: "Riñoneras", value: "rinoneras" },
+            { category: "accesorios", name: "Billeteras y monederos", value: "billeteras-y-monederos" },
+            { category: "accesorios", name: "Cuellos y bufandas", value: "cuellos-y-bufandas" },
+            { category: "accesorios", name: "Gorras", value: "gorras" },
+            { category: "accesorios", name: "Guantes", value: "guantes" },
+            { category: "accesorios", name: "Llaveros", value: "llaveros" },
+            { category: "accesorios", name: "Lentes", value: "lentes" },
+            { category: "accesorios", name: "Sobres y neceseres", value: "sobres-y-neceseres" },
+            { category: "indumentaria", name: "Abrigos y camperas", value: "abrigos-y-camperas" },
+            { category: "indumentaria", name: "Camisas y blusas", value: "camisas-y-blusas" },
+            { category: "indumentaria", name: "Pantalones", value: "pantalones" },
+            { category: "indumentaria", name: "Remeras y musculosas", value: "remeras-y-musculosas" },
+            { category: "indumentaria", name: "Sweaters y buzos", value: "sweaters-y-buzos" },
+            { category: "indumentaria", name: "Vestidos y monos", value: "vestidos-y-monos" },
+            { category: "gift-cards", name: "Gift Cards", value: "gift-cards" },
+            { category: "terra", name: "Aromática", value: "aromatica" },
+            { category: "terra", name: "Aros", value: "aros" },
+            { category: "terra", name: "Collares", value: "collares" },
+            { category: "terra", name: "Mates", value: "mates" },
+            { category: "terra", name: "Pañuelos", value: "panuelos" },
+            { category: "terra", name: "Pulseras", value: "pulseras" },
+            { category: "terra", name: "Sombreros", value: "sombreros" },
+            { category: "terra", name: "Velas", value: "velas" },
+            { category: "terra", name: "Box para regalar", value: "box-para-regalar" }
         ]
     };
 
