@@ -569,6 +569,57 @@ function setupEventListeners() {
     }
 }
 
+// AUTHENTICATION MODAL CONTROLLER
+window.openAuthModal = function() {
+    if (authModalContainer) {
+        authModalContainer.style.display = 'flex';
+        resetAuthModalForms();
+        document.body.style.overflow = 'hidden';
+    }
+};
+
+window.closeAuthModal = function() {
+    if (authModalContainer) {
+        authModalContainer.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+};
+
+window.resetAuthModalForms = function() {
+    if (authEmailForm && authOtpForm && authErrorMsg && authEmailInput && authCodeInput) {
+        authEmailForm.style.display = 'flex';
+        authOtpForm.style.display = 'none';
+        authErrorMsg.style.display = 'none';
+        authEmailInput.value = '';
+        authCodeInput.value = '';
+        sessionStorage.removeItem('tosco_auth_email');
+    }
+};
+
+window.updateAuthHeader = function() {
+    if (userEmailHeader) {
+        if (loggedInUserEmail) {
+            userEmailHeader.innerText = loggedInUserEmail;
+            userEmailHeader.style.display = 'inline-block';
+        } else {
+            userEmailHeader.innerText = '';
+            userEmailHeader.style.display = 'none';
+        }
+    }
+};
+
+window.handleProfileClick = function() {
+    if (loggedInUserEmail) {
+        if (confirm(`Sesión iniciada como ${loggedInUserEmail}.\n¿Deseas cerrar sesión?`)) {
+            localStorage.removeItem('tosco_logged_user');
+            loggedInUserEmail = null;
+            updateAuthHeader();
+        }
+    } else {
+        openAuthModal();
+    }
+};
+
 
 
 // RENDER MAIN WEB CATALOG
