@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id            Int      @id
+  name          String
+  brand         String
+  category      String
+  subcategory   String
+  price         Float
+  originalPrice Float?
+  stock         Int      @default(0)
+  image         String
+  labels        String[]
+  sizes         String[]
+  sizesStock    Json
+  order         Int      @default(0)
+  visible       Boolean  @default(true)
+}
+
+model Order {
+  id              BigInt   @id
+  date            DateTime @default(now())
+  status          String
+  customerName    String
+  customerPhone   String
+  customerEmail   String
+  customerState   String
+  customerCity    String
+  customerAddress String
+  customerZip     String
+  carrier         String
+  shippingCost    Float
+  subtotal        Float
+  total           Float
+  items           Json
+}
+
+model Config {
+  key  String @id
+  data Json
+}

@@ -90,72 +90,42 @@ const authErrorMsg = document.getElementById('auth-error-msg');
 const authBackBtn = document.getElementById('auth-back-btn');
 
 
+let isUsingAPI = true;
 let isUsingFirebase = false;
-let dbFirestore = null;
 
 // ORDER DB CONTROLLER
 async function dbPutOrder(order) {
-    if (isUsingFirebase) {
-        await dbFirestore.collection('orders').doc(String(order.id)).set(order);
-        return order.id;
-    } else {
-        return new Promise((resolve) => {
-            const transaction = db.transaction('orders', 'readwrite');
-            const store = transaction.objectStore('orders');
-            const request = store.put(order);
-            request.onsuccess = () => {
-                resolve(request.result);
-            };
-        });
+    if (isUsingAPI) {
+        try {
+            const response = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(order)
+            });
+            if (response.ok) {
+                const saved = await response.json();
+                return saved.id;
+            }
+            throw new Error("API error on saving order");
+        } catch (err) {
+            console.warn("API failed, using local IndexedDB fallback for order:", err);
+        }
     }
+    return new Promise((resolve) => {
+        const transaction = db.transaction('orders', 'readwrite');
+        const store = transaction.objectStore('orders');
+        const request = store.put(order);
+        request.onsuccess = () => {
+            resolve(request.result);
+        };
+    });
 }
 
-// INDEXEDDB / FIREBASE CONTROLLER
+// INDEXEDDB / API INITIALIZATION
 async function dbInit() {
-    try {
-        const config = {
-            apiKey: "AIzaSyBA0MU8Pt0sctRIUeg1uiMdz2Rq0e5aNmU",
-            authDomain: "tosco-90f31.firebaseapp.com",
-            projectId: "tosco-90f31",
-            storageBucket: "tosco-90f31.firebasestorage.app",
-            messagingSenderId: "1079789010898",
-            appId: "1:1079789010898:web:46581a797283726d21920b"
-        };
-        
-        if (typeof firebase !== 'undefined') {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(config);
-            }
-            dbFirestore = firebase.firestore();
-            isUsingFirebase = true;
-            console.log("Using Firebase Firestore database.");
-
-            // Check seed for Firebase
-            const snapshot = await dbFirestore.collection('products').limit(1).get();
-            if (snapshot.empty) {
-                console.log("Seeding Firebase Firestore with initial products...");
-                const batch = dbFirestore.batch();
-                INITIAL_PRODUCTS.forEach(p => {
-                    if (p.stock === undefined) p.stock = 10;
-                    const docRef = dbFirestore.collection('products').doc(String(p.id));
-                    batch.set(docRef, p);
-                });
-                await batch.commit();
-                console.log("Firebase Firestore database seeded successfully.");
-            }
-            return;
-        } else {
-            throw new Error("Firebase SDK not loaded on client");
-        }
-    } catch (err) {
-        console.error("Firebase initialization failed, falling back to IndexedDB:", err);
-    }
-
-    // Fallback to IndexedDB
-    isUsingFirebase = false;
-    return new Promise((resolve, reject) => {
+    // We always initialize IndexedDB as our local offline cache/fallback
+    await new Promise((resolve, reject) => {
         const request = indexedDB.open('ToscoStoreDB', 2);
-
         request.onupgradeneeded = (e) => {
             const database = e.target.result;
             if (!database.objectStoreNames.contains('products')) {
@@ -165,104 +135,149 @@ async function dbInit() {
                 database.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
             }
         };
-
         request.onsuccess = (e) => {
             db = e.target.result;
-            // Seed check
-            const transaction = db.transaction('products', 'readwrite');
-            const store = transaction.objectStore('products');
-            const countRequest = store.count();
-
-            countRequest.onsuccess = () => {
-                if (countRequest.result === 0) {
-                    INITIAL_PRODUCTS.forEach(p => {
-                        if (p.stock === undefined) p.stock = 10;
-                        store.put(p);
-                    });
-                    console.log("Database seeded with default products.");
-                }
-                resolve();
-            };
+            resolve();
         };
-
         request.onerror = (e) => {
             reject(e.target.error);
+        };
+    });
+
+    // Test API connection and fetch initial products to cache
+    try {
+        const response = await fetch('/api/products');
+        if (response.ok) {
+            const products = await response.json();
+            isUsingAPI = true;
+            console.log("Successfully connected to serverless PostgreSQL/Prisma API.");
+            
+            // Sync/update local IndexedDB cache with latest products from API
+            const transaction = db.transaction('products', 'readwrite');
+            const store = transaction.objectStore('products');
+            store.clear();
+            products.forEach(p => {
+                store.put(p);
+            });
+            return;
+        }
+    } catch (err) {
+        console.warn("Failed to connect to API, running in offline/IndexedDB mode:", err);
+    }
+
+    isUsingAPI = false;
+    
+    // Seed offline IndexedDB with default products if empty
+    const transaction = db.transaction('products', 'readwrite');
+    const store = transaction.objectStore('products');
+    const countRequest = store.count();
+    await new Promise((resolve) => {
+        countRequest.onsuccess = () => {
+            if (countRequest.result === 0) {
+                INITIAL_PRODUCTS.forEach(p => {
+                    if (p.stock === undefined) p.stock = 10;
+                    store.put(p);
+                });
+                console.log("Database seeded with default products in IndexedDB.");
+            }
+            resolve();
         };
     });
 }
 
 async function dbGetAllProducts() {
-    if (isUsingFirebase) {
-        const snapshot = await dbFirestore.collection('products').get();
-        const products = [];
-        snapshot.forEach(doc => {
-            products.push(doc.data());
-        });
-        return products;
-    } else {
-        return new Promise((resolve) => {
-            const transaction = db.transaction('products', 'readonly');
-            const store = transaction.objectStore('products');
-            const request = store.getAll();
-
-            request.onsuccess = () => {
-                resolve(request.result);
-            };
-        });
+    if (isUsingAPI) {
+        try {
+            const response = await fetch('/api/products');
+            if (response.ok) {
+                const products = await response.json();
+                return products;
+            }
+        } catch (err) {
+            console.warn("Failed to fetch products from API, falling back to IndexedDB:", err);
+        }
     }
+    return new Promise((resolve) => {
+        const transaction = db.transaction('products', 'readonly');
+        const store = transaction.objectStore('products');
+        const request = store.getAll();
+        request.onsuccess = () => {
+            resolve(request.result);
+        };
+    });
 }
 
 async function dbPutProduct(product) {
-    if (isUsingFirebase) {
-        await dbFirestore.collection('products').doc(String(product.id)).set(product);
-    } else {
-        return new Promise((resolve) => {
-            const transaction = db.transaction('products', 'readwrite');
-            const store = transaction.objectStore('products');
-            const request = store.put(product);
-
-            request.onsuccess = () => {
-                resolve();
-            };
-        });
+    if (isUsingAPI) {
+        try {
+            const response = await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(product)
+            });
+            if (response.ok) {
+                return;
+            }
+        } catch (err) {
+            console.warn("Failed to save product to API, updating IndexedDB cache only:", err);
+        }
     }
+    return new Promise((resolve) => {
+        const transaction = db.transaction('products', 'readwrite');
+        const store = transaction.objectStore('products');
+        const request = store.put(product);
+        request.onsuccess = () => {
+            resolve();
+        };
+    });
 }
 
 async function dbDeleteProduct(id) {
-    if (isUsingFirebase) {
-        await dbFirestore.collection('products').doc(String(id)).delete();
-    } else {
-        return new Promise((resolve) => {
-            const transaction = db.transaction('products', 'readwrite');
-            const store = transaction.objectStore('products');
-            const request = store.delete(id);
-
-            request.onsuccess = () => {
-                resolve();
-            };
-        });
+    if (isUsingAPI) {
+        try {
+            const response = await fetch(`/api/products?id=${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                return;
+            }
+        } catch (err) {
+            console.warn("Failed to delete product on API, updating IndexedDB cache only:", err);
+        }
     }
+    return new Promise((resolve) => {
+        const transaction = db.transaction('products', 'readwrite');
+        const store = transaction.objectStore('products');
+        const request = store.delete(id);
+        request.onsuccess = () => {
+            resolve();
+        };
+    });
 }
 
 async function dbClearAll() {
-    if (isUsingFirebase) {
-        const snapshot = await dbFirestore.collection('products').get();
-        const batch = dbFirestore.batch();
-        snapshot.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-        await batch.commit();
-    } else {
-        return new Promise((resolve) => {
-            const transaction = db.transaction('products', 'readwrite');
-            const store = transaction.objectStore('products');
-            const request = store.clear();
-
-            request.onsuccess = () => {
-                resolve();
-            };
-        });
+    if (isUsingAPI) {
+        try {
+            const response = await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'reset' })
+            });
+            if (response.ok) {
+                return;
+            }
+        } catch (err) {
+            console.warn("Failed to clear database via API:", err);
+        }
     }
+    return new Promise((resolve) => {
+        const transaction = db.transaction('products', 'readwrite');
+        const store = transaction.objectStore('products');
+        const request = store.clear();
+        request.onsuccess = () => {
+            resolve();
+        };
+    });
 }
 
 // APPLY CUSTOM APPEARANCE FROM LOCALSTORAGE
@@ -303,11 +318,14 @@ async function checkStoreStatus() {
     const isPreview = localStorage.getItem('tosco_preview_mode') === 'true';
     let storeOnline = true;
 
-    if (isUsingFirebase) {
+    if (isUsingAPI) {
         try {
-            const doc = await dbFirestore.collection('config').doc('store').get();
-            if (doc.exists) {
-                storeOnline = doc.data().online !== false;
+            const res = await fetch('/api/config?key=store');
+            if (res.ok) {
+                const data = await res.json();
+                storeOnline = data.online !== false;
+            } else {
+                storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
             }
         } catch (e) {
             console.error("Error fetching store status:", e);
@@ -328,7 +346,7 @@ async function checkStoreStatus() {
         }
     }
     // Refresh products catalog when tab gets focus to sync admin changes
-    if (isUsingFirebase || db) {
+    if (isUsingAPI || db) {
         try {
             await refreshLocalState();
         } catch (err) {
@@ -1370,27 +1388,10 @@ window.handleWhatsAppClick = async function(productId) {
     if (!p) return;
 
     const selectedSize = document.getElementById('detail-selected-size').value;
-    
     if (!loggedInUserEmail) {
         const email = prompt("Para asesorarte mejor y enviarte la confirmación, por favor ingresa tu correo electrónico:");
         if (email && email.includes('@')) {
             const cleanEmail = email.trim().toLowerCase();
-            
-            // Save lead in Firestore (live mode)
-            if (isUsingFirebase) {
-                try {
-                    await dbFirestore.collection('leads').doc(cleanEmail).set({
-                        email: cleanEmail,
-                        date: new Date().toISOString(),
-                        source: 'Consulta WhatsApp',
-                        productOfInterest: p.name,
-                        productIdOfInterest: p.id
-                    });
-                    console.log("Lead registered in Firestore");
-                } catch(e) {
-                    console.error("Error saving lead in Firestore:", e);
-                }
-            }
             
             // Send OTP registration key in KVdb background
             const bucketId = 'bucket_tosco_almacen_335196ff';
@@ -1455,22 +1456,23 @@ async function dbGetCatalogConfig() {
         ]
     };
 
-    if (isUsingFirebase) {
+    if (isUsingAPI) {
         try {
-            const doc = await dbFirestore.collection('config').doc('catalog').get();
-            if (doc.exists) {
-                const data = doc.data();
+            const res = await fetch('/api/config?key=catalog');
+            if (res.ok) {
+                const data = await res.json();
                 if (!data.subcategories || data.subcategories.length < defaultCatalog.subcategories.length) {
-                    await dbFirestore.collection('config').doc('catalog').set(defaultCatalog);
+                    await fetch('/api/config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ key: 'catalog', data: defaultCatalog })
+                    });
                     return defaultCatalog;
                 }
                 return data;
-            } else {
-                await dbFirestore.collection('config').doc('catalog').set(defaultCatalog);
-                return defaultCatalog;
             }
         } catch (e) {
-            console.error("Error fetching config from Firestore:", e);
+            console.error("Error fetching config from API:", e);
         }
     }
     
