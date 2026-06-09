@@ -193,8 +193,9 @@ let isUsingFirebase = false;
 // INDEXEDDB / API INITIALIZATION
 async function dbInit() {
     // We always initialize IndexedDB as our local offline cache/fallback
+    // Bump version to 3 to ensure database upgrade runs and creates 'orders' store if missing
     await new Promise((resolve, reject) => {
-        const request = indexedDB.open('ToscoStoreDB', 2);
+        const request = indexedDB.open('ToscoStoreDB', 3);
         request.onupgradeneeded = (e) => {
             const database = e.target.result;
             if (!database.objectStoreNames.contains('products')) {
@@ -238,14 +239,25 @@ async function dbGetAllProducts() {
             console.warn("Failed to fetch products from API, falling back to IndexedDB:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readonly');
-        const store = transaction.objectStore('products');
-        const request = store.getAll();
-        request.onsuccess = () => {
-            resolve(request.result);
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve([]);
+            try {
+                const transaction = db.transaction('products', 'readonly');
+                const store = transaction.objectStore('products');
+                const request = store.getAll();
+                request.onsuccess = () => {
+                    resolve(request.result || []);
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbGetAllProducts:", err);
+        return [];
+    }
 }
 
 async function dbPutProduct(product) {
@@ -263,14 +275,24 @@ async function dbPutProduct(product) {
             console.warn("Failed to save product to API, updating IndexedDB cache only:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        const request = store.put(product);
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve();
+            try {
+                const transaction = db.transaction('products', 'readwrite');
+                const store = transaction.objectStore('products');
+                const request = store.put(product);
+                request.onsuccess = () => {
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbPutProduct:", err);
+    }
 }
 
 async function dbDeleteProduct(id) {
@@ -286,14 +308,24 @@ async function dbDeleteProduct(id) {
             console.warn("Failed to delete product on API, updating IndexedDB cache only:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        const request = store.delete(id);
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve();
+            try {
+                const transaction = db.transaction('products', 'readwrite');
+                const store = transaction.objectStore('products');
+                const request = store.delete(id);
+                request.onsuccess = () => {
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbDeleteProduct:", err);
+    }
 }
 
 async function dbClearAll() {
@@ -311,14 +343,24 @@ async function dbClearAll() {
             console.warn("Failed to clear database via API:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        const request = store.clear();
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve();
+            try {
+                const transaction = db.transaction('products', 'readwrite');
+                const store = transaction.objectStore('products');
+                const request = store.clear();
+                request.onsuccess = () => {
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbClearAll:", err);
+    }
 }
 
 // IndexedDB / API Orders helpers
@@ -333,16 +375,27 @@ async function dbGetAllOrders() {
             console.warn("Failed to fetch orders from API, falling back to IndexedDB:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('orders', 'readonly');
-        const store = transaction.objectStore('orders');
-        const request = store.getAll();
-        request.onsuccess = () => {
-            const res = request.result || [];
-            res.sort((a, b) => new Date(b.date) - new Date(a.date));
-            resolve(res);
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve([]);
+            try {
+                const transaction = db.transaction('orders', 'readonly');
+                const store = transaction.objectStore('orders');
+                const request = store.getAll();
+                request.onsuccess = () => {
+                    const res = request.result || [];
+                    res.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    resolve(res);
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbGetAllOrders:", err);
+        return [];
+    }
 }
 
 async function dbPutOrder(order) {
@@ -360,14 +413,24 @@ async function dbPutOrder(order) {
             console.warn("Failed to save order to API, updating IndexedDB cache only:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('orders', 'readwrite');
-        const store = transaction.objectStore('orders');
-        const request = store.put(order);
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve();
+            try {
+                const transaction = db.transaction('orders', 'readwrite');
+                const store = transaction.objectStore('orders');
+                const request = store.put(order);
+                request.onsuccess = () => {
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbPutOrder:", err);
+    }
 }
 
 async function dbDeleteOrder(id) {
@@ -383,14 +446,24 @@ async function dbDeleteOrder(id) {
             console.warn("Failed to delete order on API, updating IndexedDB cache only:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('orders', 'readwrite');
-        const store = transaction.objectStore('orders');
-        const request = store.delete(id);
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve();
+            try {
+                const transaction = db.transaction('orders', 'readwrite');
+                const store = transaction.objectStore('orders');
+                const request = store.delete(id);
+                request.onsuccess = () => {
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbDeleteOrder:", err);
+    }
 }
 
 // INITIALIZE APP AND LISTENERS

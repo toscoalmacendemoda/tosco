@@ -111,21 +111,32 @@ async function dbPutOrder(order) {
             console.warn("API failed, using local IndexedDB fallback for order:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('orders', 'readwrite');
-        const store = transaction.objectStore('orders');
-        const request = store.put(order);
-        request.onsuccess = () => {
-            resolve(request.result);
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve();
+            try {
+                const transaction = db.transaction('orders', 'readwrite');
+                const store = transaction.objectStore('orders');
+                const request = store.put(order);
+                request.onsuccess = () => {
+                    resolve(request.result);
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbPutOrder:", err);
+    }
 }
 
 // INDEXEDDB / API INITIALIZATION
 async function dbInit() {
     // We always initialize IndexedDB as our local offline cache/fallback
+    // Bump version to 3 to upgrade database and create missing stores
     await new Promise((resolve, reject) => {
-        const request = indexedDB.open('ToscoStoreDB', 2);
+        const request = indexedDB.open('ToscoStoreDB', 3);
         request.onupgradeneeded = (e) => {
             const database = e.target.result;
             if (!database.objectStoreNames.contains('products')) {
@@ -153,12 +164,16 @@ async function dbInit() {
             console.log("Successfully connected to serverless PostgreSQL/Prisma API.");
             
             // Sync/update local IndexedDB cache with latest products from API
-            const transaction = db.transaction('products', 'readwrite');
-            const store = transaction.objectStore('products');
-            store.clear();
-            products.forEach(p => {
-                store.put(p);
-            });
+            try {
+                const transaction = db.transaction('products', 'readwrite');
+                const store = transaction.objectStore('products');
+                store.clear();
+                products.forEach(p => {
+                    store.put(p);
+                });
+            } catch (e) {
+                console.warn("Failed to sync products cache to IndexedDB:", e);
+            }
             return;
         }
     } catch (err) {
@@ -168,21 +183,25 @@ async function dbInit() {
     isUsingAPI = false;
     
     // Seed offline IndexedDB with default products if empty
-    const transaction = db.transaction('products', 'readwrite');
-    const store = transaction.objectStore('products');
-    const countRequest = store.count();
-    await new Promise((resolve) => {
-        countRequest.onsuccess = () => {
-            if (countRequest.result === 0) {
-                INITIAL_PRODUCTS.forEach(p => {
-                    if (p.stock === undefined) p.stock = 10;
-                    store.put(p);
-                });
-                console.log("Database seeded with default products in IndexedDB.");
-            }
-            resolve();
-        };
-    });
+    try {
+        const transaction = db.transaction('products', 'readwrite');
+        const store = transaction.objectStore('products');
+        const countRequest = store.count();
+        await new Promise((resolve) => {
+            countRequest.onsuccess = () => {
+                if (countRequest.result === 0) {
+                    INITIAL_PRODUCTS.forEach(p => {
+                        if (p.stock === undefined) p.stock = 10;
+                        store.put(p);
+                    });
+                    console.log("Database seeded with default products in IndexedDB.");
+                }
+                resolve();
+            };
+        });
+    } catch (err) {
+        console.error("IndexedDB offline seeding failed:", err);
+    }
 }
 
 async function dbGetAllProducts() {
@@ -197,14 +216,25 @@ async function dbGetAllProducts() {
             console.warn("Failed to fetch products from API, falling back to IndexedDB:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readonly');
-        const store = transaction.objectStore('products');
-        const request = store.getAll();
-        request.onsuccess = () => {
-            resolve(request.result);
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve([]);
+            try {
+                const transaction = db.transaction('products', 'readonly');
+                const store = transaction.objectStore('products');
+                const request = store.getAll();
+                request.onsuccess = () => {
+                    resolve(request.result || []);
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbGetAllProducts:", err);
+        return [];
+    }
 }
 
 async function dbPutProduct(product) {
@@ -222,14 +252,24 @@ async function dbPutProduct(product) {
             console.warn("Failed to save product to API, updating IndexedDB cache only:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        const request = store.put(product);
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve();
+            try {
+                const transaction = db.transaction('products', 'readwrite');
+                const store = transaction.objectStore('products');
+                const request = store.put(product);
+                request.onsuccess = () => {
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbPutProduct:", err);
+    }
 }
 
 async function dbDeleteProduct(id) {
@@ -245,14 +285,24 @@ async function dbDeleteProduct(id) {
             console.warn("Failed to delete product on API, updating IndexedDB cache only:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        const request = store.delete(id);
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve();
+            try {
+                const transaction = db.transaction('products', 'readwrite');
+                const store = transaction.objectStore('products');
+                const request = store.delete(id);
+                request.onsuccess = () => {
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbDeleteProduct:", err);
+    }
 }
 
 async function dbClearAll() {
@@ -270,14 +320,24 @@ async function dbClearAll() {
             console.warn("Failed to clear database via API:", err);
         }
     }
-    return new Promise((resolve) => {
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        const request = store.clear();
-        request.onsuccess = () => {
-            resolve();
-        };
-    });
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) return resolve();
+            try {
+                const transaction = db.transaction('products', 'readwrite');
+                const store = transaction.objectStore('products');
+                const request = store.clear();
+                request.onsuccess = () => {
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error("IndexedDB error in dbClearAll:", err);
+    }
 }
 
 // APPLY CUSTOM APPEARANCE FROM LOCALSTORAGE
