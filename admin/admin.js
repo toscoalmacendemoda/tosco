@@ -594,7 +594,31 @@ function setupAdminEventListeners() {
                 createSizeStockRow('Único', 10);
             }
         }
+        updateSubcategoryDropdown();
     });
+}
+
+function updateSubcategoryDropdown() {
+    const selectedCategory = formCategory.value;
+    formSubcategory.innerHTML = '';
+    
+    // Get subcategories from CATALOG_CONFIG that match selectedCategory
+    const matching = (CATALOG_CONFIG.subcategories || []).filter(s => s.category === selectedCategory);
+    
+    if (matching.length > 0) {
+        matching.forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub.value;
+            opt.innerText = sub.name;
+            formSubcategory.appendChild(opt);
+        });
+    } else {
+        // Fallback option if no subcategories exist
+        const opt = document.createElement('option');
+        opt.value = selectedCategory;
+        opt.innerText = formCategory.options[formCategory.selectedIndex].text;
+        formSubcategory.appendChild(opt);
+    }
 }
 
 function createSizeStockRow(size = '', stock = 0) {
@@ -852,6 +876,7 @@ window.openProductModal = function(productId) {
         formName.value = p.name;
         formBrand.value = p.brand;
         formCategory.value = p.category;
+        updateSubcategoryDropdown();
         formSubcategory.value = p.subcategory;
         formPrice.value = p.price;
         formOriginalPrice.value = p.originalPrice || '';
@@ -881,6 +906,7 @@ window.openProductModal = function(productId) {
         formProductId.value = '';
         formImagePreview.src = '/assets/hero_tosco.png';
         formImage.value = '';
+        updateSubcategoryDropdown();
         
         // Default rows for shoe/cloth sizes
         createSizeStockRow('36', 5);
@@ -1239,8 +1265,10 @@ async function initCatalogTabUI() {
         { category: "terra", name: "Box para regalar", value: "box-para-regalar" }
     ];
     
-    CATALOG_CONFIG.subcategories = defaultSubcats;
-    await dbPutCatalogConfig(CATALOG_CONFIG);
+    if (!CATALOG_CONFIG.subcategories || CATALOG_CONFIG.subcategories.length === 0) {
+        CATALOG_CONFIG.subcategories = defaultSubcats;
+        await dbPutCatalogConfig(CATALOG_CONFIG);
+    }
     
     renderBrandsTable();
     renderSubcategoriesTable();
