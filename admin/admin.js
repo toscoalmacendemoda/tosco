@@ -187,6 +187,23 @@ function hideLoader() {
 
 
 
+async function fetchWithTimeout(resource, options = {}) {
+    const { timeout = 8000 } = options;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+        const response = await fetch(resource, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(id);
+        return response;
+    } catch (err) {
+        clearTimeout(id);
+        throw err;
+    }
+}
+
 let isUsingAPI = true;
 let isUsingFirebase = false;
 
@@ -216,7 +233,7 @@ async function dbInit() {
 
     // Test API connection
     try {
-        const response = await fetch('/api/products');
+        const response = await fetchWithTimeout('/api/products');
         if (response.ok) {
             isUsingAPI = true;
             console.log("Admin connected to serverless PostgreSQL/Prisma API.");
@@ -231,7 +248,7 @@ async function dbInit() {
 async function dbGetAllProducts() {
     if (isUsingAPI) {
         try {
-            const response = await fetch('/api/products');
+            const response = await fetchWithTimeout('/api/products');
             if (response.ok) {
                 return await response.json();
             }
@@ -263,7 +280,7 @@ async function dbGetAllProducts() {
 async function dbPutProduct(product) {
     if (isUsingAPI) {
         try {
-            const response = await fetch('/api/products', {
+            const response = await fetchWithTimeout('/api/products', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(product)
@@ -298,7 +315,7 @@ async function dbPutProduct(product) {
 async function dbDeleteProduct(id) {
     if (isUsingAPI) {
         try {
-            const response = await fetch(`/api/products?id=${id}`, {
+            const response = await fetchWithTimeout(`/api/products?id=${id}`, {
                 method: 'DELETE'
             });
             if (response.ok) {
@@ -331,7 +348,7 @@ async function dbDeleteProduct(id) {
 async function dbClearAll() {
     if (isUsingAPI) {
         try {
-            const response = await fetch('/api/config', {
+            const response = await fetchWithTimeout('/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'reset' })
@@ -367,7 +384,7 @@ async function dbClearAll() {
 async function dbGetAllOrders() {
     if (isUsingAPI) {
         try {
-            const response = await fetch('/api/orders');
+            const response = await fetchWithTimeout('/api/orders');
             if (response.ok) {
                 return await response.json();
             }
@@ -401,7 +418,7 @@ async function dbGetAllOrders() {
 async function dbPutOrder(order) {
     if (isUsingAPI) {
         try {
-            const response = await fetch('/api/orders', {
+            const response = await fetchWithTimeout('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(order)
@@ -436,7 +453,7 @@ async function dbPutOrder(order) {
 async function dbDeleteOrder(id) {
     if (isUsingAPI) {
         try {
-            const response = await fetch(`/api/orders?id=${id}`, {
+            const response = await fetchWithTimeout(`/api/orders?id=${id}`, {
                 method: 'DELETE'
             });
             if (response.ok) {
@@ -983,7 +1000,7 @@ window.updateOrderStatus = async function(orderId, newStatus) {
         // If despachar (set to Activo), request to the serverless function
         if (newStatus === 'Activo') {
             try {
-                const res = await fetch('/api/despachar', {
+                const res = await fetchWithTimeout('/api/despachar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1383,11 +1400,11 @@ async function dbGetCatalogConfig() {
 
     if (isUsingAPI) {
         try {
-            const res = await fetch('/api/config?key=catalog');
+            const res = await fetchWithTimeout('/api/config?key=catalog');
             if (res.ok) {
                 const data = await res.json();
                 if (!data.subcategories || data.subcategories.length < defaultCatalog.subcategories.length) {
-                    await fetch('/api/config', {
+                    await fetchWithTimeout('/api/config', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ key: 'catalog', data: defaultCatalog })
@@ -1413,7 +1430,7 @@ async function dbGetCatalogConfig() {
 async function dbPutCatalogConfig(config) {
     if (isUsingAPI) {
         try {
-            await fetch('/api/config', {
+            await fetchWithTimeout('/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ key: 'catalog', data: config })
