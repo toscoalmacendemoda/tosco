@@ -3,7 +3,10 @@
 <head>
     <script>
         window.onerror = function(msg, url, line) {
-            alert("JS Error: " + msg + "\nURL: " + url + "\nLine: " + line);
+            console.error("JS Error: " + msg + "\nURL: " + url + "\nLine: " + line);
+            if (window.showToast) {
+                window.showToast("Error de JavaScript detectado", "error");
+            }
             return false;
         };
     </script>
@@ -77,6 +80,90 @@
             text-align: center;
             display: none;
             font-weight: 600;
+        }
+
+        /* Spinner styles */
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid var(--gray-medium);
+            border-top: 3px solid var(--main-foreground);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast notifications */
+        .toast-msg {
+            pointer-events: auto;
+            min-width: 300px;
+            max-width: 450px;
+            padding: 14px 20px;
+            border-radius: 8px;
+            background: white;
+            color: var(--main-foreground);
+            font-family: 'Lato', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 10px 30px rgba(145, 107, 94, 0.12);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border-left: 5px solid var(--main-foreground);
+        }
+        .toast-msg.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast-msg.success {
+            border-left-color: #27ae60;
+        }
+        .toast-msg.success i {
+            color: #27ae60;
+        }
+        .toast-msg.error {
+            border-left-color: #c0392b;
+        }
+        .toast-msg.error i {
+            color: #c0392b;
+        }
+        .toast-msg.info {
+            border-left-color: #2980b9;
+        }
+        .toast-msg.info i {
+            color: #2980b9;
+        }
+
+        /* Micro-interactions and Premium styles */
+        .btn-admin-action, .btn-table-action, .btn-premium, .login-btn, .btn-form-cancel, .btn-form-save {
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        }
+        .btn-admin-action:hover, .btn-table-action:hover, .login-btn:hover, .btn-form-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(145, 107, 94, 0.15);
+        }
+        .btn-admin-action:active, .btn-table-action:active, .login-btn:active, .btn-form-save:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        .btn-table-action.delete:hover {
+            box-shadow: 0 4px 12px rgba(192, 57, 43, 0.2) !important;
+        }
+
+        /* Table row responsive interactive feel */
+        .admin-table tbody tr {
+            transition: all 0.2s ease;
+        }
+        .admin-table tbody tr:hover {
+            background-color: var(--gray-light) !important;
+            transform: scale(1.002);
+            box-shadow: inset 3px 0 0 var(--main-foreground);
         }
     </style>
 </head>
@@ -500,6 +587,15 @@
             </form>
         </div>
     </div>
+
+    <!-- Global Loading Overlay -->
+    <div id="loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(255,255,255,0.7); z-index:9999; justify-content:center; align-items:center; flex-direction:column; backdrop-filter:blur(3px); transition: opacity 0.3s ease; opacity: 0;">
+        <div class="spinner"></div>
+        <span style="margin-top:15px; font-weight:bold; color:var(--main-foreground); font-family:var(--body-font); font-size:12px; letter-spacing:2px; text-transform:uppercase;">Procesando...</span>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" style="position:fixed; bottom:20px; right:20px; z-index:10000; display:flex; flex-direction:column; gap:10px; pointer-events: none;"></div>
 
     <!-- Firebase Compat SDK from CDN -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>

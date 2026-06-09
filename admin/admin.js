@@ -127,6 +127,65 @@ function initDOMElements() {
     formImageFileName = document.getElementById('form-image-file-name');
 }
 
+// PREMIUM TOAST & LOADER SYSTEM
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast-msg ${type}`;
+
+    let icon = '<i class="fa-solid fa-circle-check"></i>';
+    if (type === 'error') {
+        icon = '<i class="fa-solid fa-circle-xmark"></i>';
+    } else if (type === 'info') {
+        icon = '<i class="fa-solid fa-circle-info"></i>';
+    }
+
+    toast.innerHTML = `${icon} <span>${message}</span>`;
+    container.appendChild(toast);
+
+    // Trigger transition
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    // Auto-remove toast
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 3500);
+}
+
+// Make it globally accessible
+window.showToast = showToast;
+window.alert = (msg) => showToast(msg, 'info');
+
+function showLoader() {
+    const loader = document.getElementById('loading-overlay');
+    if (loader) {
+        loader.style.display = 'flex';
+        // force reflow
+        loader.offsetHeight;
+        loader.style.opacity = '1';
+    }
+}
+
+function hideLoader() {
+    const loader = document.getElementById('loading-overlay');
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+            if (loader.style.opacity === '0') {
+                loader.style.display = 'none';
+            }
+        }, 300);
+    }
+}
+
+
 
 let isUsingFirebase = false;
 let dbFirestore = null;
@@ -528,10 +587,20 @@ function setupAdminEventListeners() {
     // Appearance Form Submit
     appearanceForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        localStorage.setItem('tosco_custom_logo', logoPreviewImg.src);
-        localStorage.setItem('tosco_custom_hero', heroPreviewImg.src);
-        localStorage.setItem('tosco_custom_ticker', configTickerInput.value.trim());
-        alert('¡Configuración visual guardada correctamente!');
+        showLoader();
+        setTimeout(() => {
+            try {
+                localStorage.setItem('tosco_custom_logo', logoPreviewImg.src);
+                localStorage.setItem('tosco_custom_hero', heroPreviewImg.src);
+                localStorage.setItem('tosco_custom_ticker', configTickerInput.value.trim());
+                showToast('¡Configuración visual guardada correctamente!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Error al guardar la configuración visual (puede que las imágenes sean demasiado grandes).', 'error');
+            } finally {
+                hideLoader();
+            }
+        }, 100);
     });
 
     // File change listeners for appearance customization
@@ -815,34 +884,42 @@ window.updateOrderStatus = async function(orderId, newStatus) {
     const o = ALL_ORDERS.find(ord => ord.id === orderId);
     if (!o) return;
     
-    // If despachar (set to Activo), request to the serverless function
-    if (newStatus === 'Activo') {
-        try {
-            const res = await fetch('/api/despachar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    orderId: o.id,
-                    customer: o.customer,
-                    carrier: o.carrier
-                })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                if (data && data.success) {
-                    o.trackingId = data.tracking_id;
-                    o.labelPdfUrl = data.label_pdf_url;
+    showLoader();
+    try {
+        // If despachar (set to Activo), request to the serverless function
+        if (newStatus === 'Activo') {
+            try {
+                const res = await fetch('/api/despachar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: o.id,
+                        customer: o.customer,
+                        carrier: o.carrier
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.success) {
+                        o.trackingId = data.tracking_id;
+                        o.labelPdfUrl = data.label_pdf_url;
+                    }
                 }
+            } catch (err) {
+                console.error("Error calling api/despachar:", err);
             }
-        } catch (err) {
-            console.error("Error calling api/despachar:", err);
         }
-    }
 
-    o.status = newStatus;
-    await dbPutOrder(o);
-    await refreshLocalState();
-    alert(`Pedido #${orderId} actualizado a ${newStatus === 'Activo' ? 'Despachado' : newStatus}.`);
+        o.status = newStatus;
+        await dbPutOrder(o);
+        await refreshLocalState();
+        showToast(`Pedido #${orderId} actualizado a ${newStatus === 'Activo' ? 'Despachado' : newStatus}.`, 'success');
+    } catch (err) {
+        console.error(err);
+        showToast(`Error al actualizar el estado del pedido #${orderId}.`, 'error');
+    } finally {
+        hideLoader();
+    }
 };
 
 window.printShippingLabel = function(orderId) {
@@ -856,8 +933,17 @@ window.printShippingLabel = function(orderId) {
 
 window.deleteOrder = async function(orderId) {
     if (!confirm("¿Desea eliminar de forma permanente el registro de este pedido?")) return;
-    await dbDeleteOrder(orderId);
-    await refreshLocalState();
+    showLoader();
+    try {
+        await dbDeleteOrder(orderId);
+        await refreshLocalState();
+        showToast(`Pedido #${orderId} eliminado correctamente.`, 'success');
+    } catch (err) {
+        console.error(err);
+        showToast("Error al eliminar el pedido.", "error");
+    } finally {
+        hideLoader();
+    }
 };
 
 // Modal handling
@@ -973,27 +1059,35 @@ async function saveProductForm(e) {
         sizes: sizesArr
     };
 
+    showLoader();
     try {
         await dbPutProduct(productData);
         await refreshLocalState();
         renderAdminTable();
         closeProductModal();
+        showToast(isEdit ? "¡Producto modificado correctamente!" : "¡Producto creado correctamente!", "success");
     } catch (err) {
         console.error("Error saving product: ", err);
-        alert("Ocurrió un error al guardar el producto.");
+        showToast("Ocurrió un error al guardar el producto.", "error");
+    } finally {
+        hideLoader();
     }
 }
 
 window.deleteProduct = async function(productId) {
     if (!confirm("¿Está seguro que desea eliminar este producto?")) return;
     
+    showLoader();
     try {
         await dbDeleteProduct(productId);
         await refreshLocalState();
         renderAdminTable();
+        showToast("¡Producto eliminado correctamente!", "success");
     } catch (err) {
         console.error("Error deleting product: ", err);
-        alert("Ocurrió un error al borrar el producto.");
+        showToast("Ocurrió un error al borrar el producto.", "error");
+    } finally {
+        hideLoader();
     }
 };
 
@@ -1001,6 +1095,7 @@ window.deleteProduct = async function(productId) {
 async function resetDatabaseToFactory() {
     if (!confirm("¿Desea restablecer toda la base de datos a los valores de fábrica originales? Se perderán las cargas nuevas.")) return;
     
+    showLoader();
     try {
         await dbClearAll();
         
