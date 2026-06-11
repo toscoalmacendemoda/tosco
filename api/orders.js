@@ -19,10 +19,9 @@ module.exports = async (req, res) => {
             const orders = await prisma.order.findMany({
                 orderBy: { date: 'desc' }
             });
-            // Convert BigInt id to Number for JSON serialization safety
             const serialized = orders.map(o => ({
                 ...o,
-                id: Number(o.id)
+                id: String(o.id)
             }));
             return res.status(200).json(serialized);
         }
@@ -35,12 +34,12 @@ module.exports = async (req, res) => {
                     return res.status(400).json({ error: 'Faltan campos (id, status).' });
                 }
                 const updated = await prisma.order.update({
-                    where: { id: BigInt(id) },
+                    where: { id: String(id) },
                     data: { status }
                 });
                 return res.status(200).json({
                     ...updated,
-                    id: Number(updated.id)
+                    id: String(updated.id)
                 });
             }
 
@@ -50,7 +49,7 @@ module.exports = async (req, res) => {
 
             const order = await prisma.order.create({
                 data: {
-                    id: BigInt(o.id),
+                    id: String(o.id),
                     date: o.date ? new Date(o.date) : new Date(),
                     status: o.status || 'Pendiente',
                     customerName: o.customer.name,
@@ -69,7 +68,7 @@ module.exports = async (req, res) => {
             });
             return res.status(200).json({
                 ...order,
-                id: Number(order.id)
+                id: String(order.id)
             });
         }
 
@@ -79,12 +78,12 @@ module.exports = async (req, res) => {
                 return res.status(400).json({ error: 'Faltan campos (id, status).' });
             }
             const updated = await prisma.order.update({
-                where: { id: BigInt(id) },
+                where: { id: String(id) },
                 data: { status }
             });
             return res.status(200).json({
                 ...updated,
-                id: Number(updated.id)
+                id: String(updated.id)
             });
         }
 
@@ -94,7 +93,7 @@ module.exports = async (req, res) => {
                 return res.status(400).json({ error: 'Falta parámetro id.' });
             }
             await prisma.order.delete({
-                where: { id: BigInt(id) }
+                where: { id: String(id) }
             });
             return res.status(200).json({ success: true });
         }

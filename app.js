@@ -25,7 +25,7 @@ const INITIAL_PRODUCTS = [
 // STATE MANAGEMENT
 let db = null;
 let ALL_PRODUCTS = []; // Runtime memory of products
-let cart = JSON.parse(localStorage.getItem('tosco_cart')) || [];
+let cart = []; // In-memory cart only
 let activeCategory = 'all';
 let activeSubcategory = '';
 let activeBrand = '';
@@ -34,7 +34,27 @@ let apiShippingRates = {
     Andreani: 9500,
     'Correo Argentino': 7800
 };
-let loggedInUserEmail = localStorage.getItem('tosco_logged_user') || null;
+let loggedInUserEmail = null; // In-memory session only
+
+// SUPABASE CLIENT INITIALIZATION & REALTIME SYNC
+const SUPABASE_URL = "https://yhcozuxkgmobalydznjr.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloY296dXhrZ21vYmFseWR6bmpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMjAzNzIsImV4cCI6MjA5NjY5NjM3Mn0.iSSIkO1zb6QQ_cCrdMRhjvp2vMnv2Ez1RReWM5Hl8Wo";
+let supabaseClient = null;
+
+if (typeof supabase !== 'undefined') {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Subscribe to Product changes in real-time
+    supabaseClient
+        .channel('public:Product')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'Product' }, (payload) => {
+            console.log('Realtime product change received:', payload);
+            refreshLocalState().catch(err => console.error("Error refreshing state on realtime update:", err));
+        })
+        .subscribe();
+} else {
+    console.warn("Supabase library not loaded from CDN.");
+}
 
 // DOM ELEMENTS
 const productsGrid = document.getElementById('products-grid');
@@ -93,306 +113,136 @@ const authBackBtn = document.getElementById('auth-back-btn');
 let isUsingAPI = true;
 let isUsingFirebase = false;
 
-// ORDER DB CONTROLLER
+// ORDER DB CONTROLLER (Cloud / API direct only)
 async function dbPutOrder(order) {
-    if (isUsingAPI) {
-        try {
-            const response = await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(order)
-            });
-            if (response.ok) {
-                const saved = await response.json();
-                return saved.id;
-            }
-            throw new Error("API error on saving order");
-        } catch (err) {
-            console.warn("API failed, using local IndexedDB fallback for order:", err);
-        }
-    }
     try {
-        return await new Promise((resolve, reject) => {
-            if (!db) return resolve();
-            try {
-                const transaction = db.transaction('orders', 'readwrite');
-                const store = transaction.objectStore('orders');
-                const request = store.put(order);
-                request.onsuccess = () => {
-                    resolve(request.result);
-                };
-                request.onerror = () => reject(request.error);
-            } catch (e) {
-                reject(e);
-            }
+        const response = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(order)
         });
+        if (response.ok) {
+            const saved = await response.json();
+            return saved.id;
+        }
+        throw new Error("API error on saving order");
     } catch (err) {
-        console.error("IndexedDB error in dbPutOrder:", err);
+        console.error("Failed to save order to API:", err);
+        throw err;
     }
 }
 
-// INDEXEDDB / API INITIALIZATION
+// CLOUD DATABASE INITIALIZATION
 async function dbInit() {
-    // We always initialize IndexedDB as our local offline cache/fallback
-    // Bump version to 3 to upgrade database and create missing stores
-    await new Promise((resolve, reject) => {
-        const request = indexedDB.open('ToscoStoreDB', 3);
-        request.onupgradeneeded = (e) => {
-            const database = e.target.result;
-            if (!database.objectStoreNames.contains('products')) {
-                database.createObjectStore('products', { keyPath: 'id' });
-            }
-            if (!database.objectStoreNames.contains('orders')) {
-                database.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
-            }
-        };
-        request.onsuccess = (e) => {
-            db = e.target.result;
-            resolve();
-        };
-        request.onerror = (e) => {
-            reject(e.target.error);
-        };
-    });
-
-    // Test API connection and fetch initial products to cache
-    try {
-        const response = await fetch('/api/products');
-        if (response.ok) {
-            const products = await response.json();
-            isUsingAPI = true;
-            console.log("Successfully connected to serverless PostgreSQL/Prisma API.");
-            
-            // Sync/update local IndexedDB cache with latest products from API
-            try {
-                const transaction = db.transaction('products', 'readwrite');
-                const store = transaction.objectStore('products');
-                store.clear();
-                products.forEach(p => {
-                    store.put(p);
-                });
-            } catch (e) {
-                console.warn("Failed to sync products cache to IndexedDB:", e);
-            }
-            return;
-        }
-    } catch (err) {
-        console.warn("Failed to connect to API, running in offline/IndexedDB mode:", err);
-    }
-
-    isUsingAPI = false;
-    
-    // Seed offline IndexedDB with default products if empty
-    try {
-        const transaction = db.transaction('products', 'readwrite');
-        const store = transaction.objectStore('products');
-        const countRequest = store.count();
-        await new Promise((resolve) => {
-            countRequest.onsuccess = () => {
-                if (countRequest.result === 0) {
-                    INITIAL_PRODUCTS.forEach(p => {
-                        if (p.stock === undefined) p.stock = 10;
-                        store.put(p);
-                    });
-                    console.log("Database seeded with default products in IndexedDB.");
-                }
-                resolve();
-            };
-        });
-    } catch (err) {
-        console.error("IndexedDB offline seeding failed:", err);
-    }
+    isUsingAPI = true;
+    console.log("Using serverless PostgreSQL/Prisma API (Supabase Cloud).");
 }
 
 async function dbGetAllProducts() {
-    if (isUsingAPI) {
-        try {
-            const response = await fetch('/api/products');
-            if (response.ok) {
-                const products = await response.json();
-                return products;
-            }
-        } catch (err) {
-            console.warn("Failed to fetch products from API, falling back to IndexedDB:", err);
-        }
-    }
     try {
-        return await new Promise((resolve, reject) => {
-            if (!db) return resolve([]);
-            try {
-                const transaction = db.transaction('products', 'readonly');
-                const store = transaction.objectStore('products');
-                const request = store.getAll();
-                request.onsuccess = () => {
-                    resolve(request.result || []);
-                };
-                request.onerror = () => reject(request.error);
-            } catch (e) {
-                reject(e);
-            }
-        });
+        const response = await fetch('/api/products');
+        if (response.ok) {
+            return await response.json();
+        }
+        throw new Error("Failed to fetch products from API");
     } catch (err) {
-        console.error("IndexedDB error in dbGetAllProducts:", err);
+        console.error("Error in dbGetAllProducts:", err);
         return [];
     }
 }
 
 async function dbPutProduct(product) {
-    if (isUsingAPI) {
-        try {
-            const response = await fetch('/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(product)
-            });
-            if (response.ok) {
-                return;
-            }
-        } catch (err) {
-            console.warn("Failed to save product to API, updating IndexedDB cache only:", err);
-        }
-    }
     try {
-        return await new Promise((resolve, reject) => {
-            if (!db) return resolve();
-            try {
-                const transaction = db.transaction('products', 'readwrite');
-                const store = transaction.objectStore('products');
-                const request = store.put(product);
-                request.onsuccess = () => {
-                    resolve();
-                };
-                request.onerror = () => reject(request.error);
-            } catch (e) {
-                reject(e);
-            }
+        const response = await fetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(product)
         });
+        if (!response.ok) {
+            throw new Error("Failed to save product on API");
+        }
     } catch (err) {
-        console.error("IndexedDB error in dbPutProduct:", err);
+        console.error("Error in dbPutProduct:", err);
+        throw err;
     }
 }
 
 async function dbDeleteProduct(id) {
-    if (isUsingAPI) {
-        try {
-            const response = await fetch(`/api/products?id=${id}`, {
-                method: 'DELETE'
-            });
-            if (response.ok) {
-                return;
-            }
-        } catch (err) {
-            console.warn("Failed to delete product on API, updating IndexedDB cache only:", err);
-        }
-    }
     try {
-        return await new Promise((resolve, reject) => {
-            if (!db) return resolve();
-            try {
-                const transaction = db.transaction('products', 'readwrite');
-                const store = transaction.objectStore('products');
-                const request = store.delete(id);
-                request.onsuccess = () => {
-                    resolve();
-                };
-                request.onerror = () => reject(request.error);
-            } catch (e) {
-                reject(e);
-            }
+        const response = await fetch(`/api/products?id=${id}`, {
+            method: 'DELETE'
         });
+        if (!response.ok) {
+            throw new Error("Failed to delete product on API");
+        }
     } catch (err) {
-        console.error("IndexedDB error in dbDeleteProduct:", err);
+        console.error("Error in dbDeleteProduct:", err);
+        throw err;
     }
 }
 
 async function dbClearAll() {
-    if (isUsingAPI) {
-        try {
-            const response = await fetch('/api/config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'reset' })
-            });
-            if (response.ok) {
-                return;
-            }
-        } catch (err) {
-            console.warn("Failed to clear database via API:", err);
-        }
-    }
     try {
-        return await new Promise((resolve, reject) => {
-            if (!db) return resolve();
-            try {
-                const transaction = db.transaction('products', 'readwrite');
-                const store = transaction.objectStore('products');
-                const request = store.clear();
-                request.onsuccess = () => {
-                    resolve();
-                };
-                request.onerror = () => reject(request.error);
-            } catch (e) {
-                reject(e);
-            }
+        const response = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'reset' })
         });
+        if (!response.ok) {
+            throw new Error("Failed to clear database via API");
+        }
     } catch (err) {
-        console.error("IndexedDB error in dbClearAll:", err);
+        console.error("Error in dbClearAll:", err);
+        throw err;
     }
 }
 
-// APPLY CUSTOM APPEARANCE FROM LOCALSTORAGE
-function applyCustomAppearance() {
-    const customLogo = localStorage.getItem('tosco_custom_logo');
-    const customHero = localStorage.getItem('tosco_custom_hero');
-    const customTicker = localStorage.getItem('tosco_custom_ticker');
-
-    if (customLogo) {
-        const logoImg = document.getElementById('store-logo-img');
-        if (logoImg) logoImg.src = customLogo;
-    }
-    if (customHero) {
-        const heroBg = document.getElementById('hero-slide-bg');
-        if (heroBg) heroBg.style.backgroundImage = `url('${customHero}')`;
-    }
-    if (customTicker) {
-        const trackContainer = document.getElementById('promo-track-container');
-        if (trackContainer) {
-            trackContainer.innerHTML = '';
-            for (let i = 0; i < 5; i++) {
-                const span1 = document.createElement('span');
-                span1.className = 'promo-item';
-                span1.innerText = `- ${customTicker} -`;
-                trackContainer.appendChild(span1);
+// APPLY CUSTOM APPEARANCE FROM CLOUD DATABASE
+async function applyCustomAppearance() {
+    try {
+        const res = await fetch('/api/config?key=appearance');
+        if (res.ok) {
+            const data = await res.json();
+            if (data.customLogo) {
+                const logoImg = document.getElementById('store-logo-img');
+                if (logoImg) logoImg.src = data.customLogo;
+            }
+            if (data.customHero) {
+                const heroBg = document.getElementById('hero-slide-bg');
+                if (heroBg) heroBg.style.backgroundImage = `url('${data.customHero}')`;
+            }
+            if (data.customTicker) {
+                const trackContainer = document.getElementById('promo-track-container');
+                if (trackContainer) {
+                    trackContainer.innerHTML = '';
+                    for (let i = 0; i < 5; i++) {
+                        const span1 = document.createElement('span');
+                        span1.className = 'promo-item';
+                        span1.innerText = `- ${data.customTicker} -`;
+                        trackContainer.appendChild(span1);
+                    }
+                }
             }
         }
+    } catch (e) {
+        console.error("Error loading custom appearance from cloud:", e);
     }
 }
 
 async function checkStoreStatus() {
     // Check if the URL has the preview parameter
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('preview') === 'true') {
-        localStorage.setItem('tosco_preview_mode', 'true');
-    }
-
-    const isPreview = localStorage.getItem('tosco_preview_mode') === 'true';
+    const isPreview = urlParams.get('preview') === 'true';
     let storeOnline = true;
 
-    if (isUsingAPI) {
-        try {
-            const res = await fetch('/api/config?key=store');
-            if (res.ok) {
-                const data = await res.json();
-                storeOnline = data.online !== false;
-            } else {
-                storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
-            }
-        } catch (e) {
-            console.error("Error fetching store status:", e);
-            storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
+    try {
+        const res = await fetch('/api/config?key=store');
+        if (res.ok) {
+            const data = await res.json();
+            storeOnline = data.online !== false;
         }
-    } else {
-        storeOnline = localStorage.getItem('tosco_store_online') !== 'false';
+    } catch (e) {
+        console.error("Error fetching store status:", e);
     }
 
     const maintenanceOverlay = document.getElementById('maintenance-overlay');
@@ -635,7 +485,6 @@ function setupEventListeners() {
                 });
 
                 if (response.ok) {
-                    localStorage.setItem('tosco_logged_user', emailVal);
                     loggedInUserEmail = emailVal;
                     updateAuthHeader();
                     closeAuthModal();
@@ -696,7 +545,6 @@ window.updateAuthHeader = function() {
 window.handleProfileClick = function() {
     if (loggedInUserEmail) {
         if (confirm(`Sesión iniciada como ${loggedInUserEmail}.\n¿Deseas cerrar sesión?`)) {
-            localStorage.removeItem('tosco_logged_user');
             loggedInUserEmail = null;
             updateAuthHeader();
         }
@@ -998,7 +846,7 @@ window.removeCartItem = function(productId, size) {
 };
 
 function saveCart() {
-    localStorage.setItem('tosco_cart', JSON.stringify(cart));
+    // In-memory cart only, no localStorage write
 }
 
 // DRAWER ACTIONS
@@ -1141,9 +989,7 @@ window.checkoutAlert = function() {
 async function completeOrderPlacement(orderData) {
     try {
         // Ensure DB is ready
-        if (!isUsingFirebase && !db) await dbInit();
-        
-        // Save order to IndexedDB
+        // Save order to Supabase
         await dbPutOrder(orderData);
         
         // Subtract stock for each product and size
@@ -1160,11 +1006,6 @@ async function completeOrderPlacement(orderData) {
             }
         });
         await Promise.all(promises);
-
-        // Update monthly sales in localStorage
-        let monthlySales = parseFloat(localStorage.getItem('tosco_monthly_sales')) || 389200;
-        monthlySales += orderData.subtotal;
-        localStorage.setItem('tosco_monthly_sales', monthlySales);
 
         // Send confirmation email asynchronously (non-blocking)
         fetch('/api/send-order-email', {
@@ -1461,7 +1302,6 @@ window.handleWhatsAppClick = async function(productId) {
             }).catch(e => console.error(e));
 
             loggedInUserEmail = cleanEmail;
-            localStorage.setItem('tosco_logged_user', cleanEmail);
             updateAuthHeader();
         }
     }
@@ -1536,13 +1376,7 @@ async function dbGetCatalogConfig() {
         }
     }
     
-    const local = localStorage.getItem('tosco_catalog_config');
-    if (local) {
-        return JSON.parse(local);
-    } else {
-        localStorage.setItem('tosco_catalog_config', JSON.stringify(defaultCatalog));
-        return defaultCatalog;
-    }
+    return defaultCatalog;
 }
 
 // DYNAMIC MENU LOADER

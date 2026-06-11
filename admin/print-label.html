@@ -190,9 +190,9 @@
     </div>
 
     <script>
-        // Connect to IndexedDB to pull order details
+        // Connect to API to pull order details from Supabase in the cloud
         const urlParams = new URLSearchParams(window.location.search);
-        const orderId = parseInt(urlParams.get('orderId'));
+        const orderId = urlParams.get('orderId');
 
         if (!orderId) {
             alert("No se especificó un ID de pedido válido.");
@@ -200,36 +200,37 @@
             loadOrderDetails(orderId);
         }
 
-        function loadOrderDetails(id) {
-            const request = indexedDB.open('ToscoStoreDB', 2);
-            
-            request.onsuccess = (e) => {
-                const db = e.target.result;
-                const transaction = db.transaction('orders', 'readonly');
-                const store = transaction.objectStore('orders');
-                const getReq = store.get(id);
-                
-                getReq.onsuccess = () => {
-                    const order = getReq.result;
+        async function loadOrderDetails(id) {
+            try {
+                const response = await fetch('/api/orders');
+                if (response.ok) {
+                    const orders = await response.json();
+                    const order = orders.find(o => String(o.id) === String(id));
                     if (order) {
                         renderLabel(order);
                     } else {
-                        alert("Pedido no encontrado.");
+                        alert("Pedido no encontrado en la base de datos.");
                     }
-                };
-            };
+                } else {
+                    alert("Error al conectar con la base de datos.");
+                }
+            } catch (err) {
+                console.error("Error fetching order details:", err);
+                alert("Error al cargar los detalles del pedido.");
+            }
         }
 
         function renderLabel(order) {
             document.title = `Etiqueta Envío - Pedido #${order.id}`;
-            document.getElementById('lbl-carrier-name').innerText = order.carrier;
+            document.getElementById('lbl-carrier-name').innerText = order.carrier || '';
             document.getElementById('lbl-carrier-type').innerText = order.carrier === 'Andreani' ? 'Express' : 'Estándar';
             
-            document.getElementById('lbl-dest-name').innerText = order.customer.name;
-            document.getElementById('lbl-dest-address').innerText = order.customer.address;
-            document.getElementById('lbl-dest-city-state').innerText = `${order.customer.city}, ${order.customer.state}`;
-            document.getElementById('lbl-dest-zip').innerText = order.customer.zip;
-            document.getElementById('lbl-dest-phone').innerText = order.customer.phone;
+            // Map flat database fields
+            document.getElementById('lbl-dest-name').innerText = order.customerName || '';
+            document.getElementById('lbl-dest-address').innerText = order.customerAddress || '';
+            document.getElementById('lbl-dest-city-state').innerText = `${order.customerCity || ''}, ${order.customerState || ''}`;
+            document.getElementById('lbl-dest-zip').innerText = order.customerZip || '';
+            document.getElementById('lbl-dest-phone').innerText = order.customerPhone || '';
 
             // Generate tracking code
             const prefix = order.carrier === 'Andreani' ? 'AND' : 'COR';

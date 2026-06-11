@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
             }
 
             const product = await prisma.product.upsert({
-                where: { id: parseInt(p.id) },
+                where: { id: String(p.id) },
                 update: {
                     name: p.name,
                     brand: p.brand,
@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
                     visible: p.visible !== false
                 },
                 create: {
-                    id: parseInt(p.id),
+                    id: String(p.id),
                     name: p.name,
                     brand: p.brand,
                     category: p.category,
@@ -71,7 +71,7 @@ module.exports = async (req, res) => {
                 return res.status(400).json({ error: 'Falta parámetro id.' });
             }
             await prisma.product.delete({
-                where: { id: parseInt(id) }
+                where: { id: String(id) }
             });
             return res.status(200).json({ success: true });
         }
