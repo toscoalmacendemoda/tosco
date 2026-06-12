@@ -1476,8 +1476,16 @@ async function loadDynamicMenu() {
         brandBannersContainer.innerHTML = '';
         const brands = catalogConfig.brands;
         
-        // Render slides
-        brands.forEach(brand => {
+        // Create cloned items for infinite loop (calesita)
+        // We clone the first 3 items because desktop displays 3 items at a time
+        const brandsToRender = [...brands];
+        const cloneCount = Math.min(3, brands.length);
+        for (let i = 0; i < cloneCount; i++) {
+            brandsToRender.push(brands[i]);
+        }
+        
+        // Render slides (including clones)
+        brandsToRender.forEach((brand, idx) => {
             const slide = document.createElement('div');
             slide.className = 'brand-carousel-slide textbanner';
             slide.onclick = () => setCatalogBrand(brand.name);
@@ -1491,7 +1499,7 @@ async function loadDynamicMenu() {
             brandBannersContainer.appendChild(slide);
         });
 
-        // Render dots
+        // Render dots (only for original brands)
         if (brandCarouselDots) {
             brandCarouselDots.innerHTML = '';
             brands.forEach((_, index) => {
@@ -1511,13 +1519,26 @@ async function loadDynamicMenu() {
             });
         }
 
-        // Helper to update active dot on scroll
+        // Helper to update active dot on scroll & perform infinite loop scroll adjustment
         const updateActiveDot = () => {
             if (!brandCarouselDots || brandBannersContainer.children.length === 0) return;
             const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
             const gap = window.innerWidth <= 576 ? 16 : 24; // matches CSS gap
+            const step = slideWidth + gap;
             const scrollLeft = brandBannersContainer.scrollLeft;
-            const activeIndex = Math.round(scrollLeft / (slideWidth + gap));
+            
+            const threshold = brands.length * step;
+            
+            // Infinite loop check: if we scrolled to the cloned start, reset scroll position instantly to original start
+            if (scrollLeft >= threshold - 5) {
+                brandBannersContainer.scrollTo({
+                    left: scrollLeft - threshold,
+                    behavior: 'auto'
+                });
+                return;
+            }
+            
+            const activeIndex = Math.round(scrollLeft / step) % brands.length;
             
             const dots = brandCarouselDots.querySelectorAll('.carousel-dot');
             dots.forEach((dot, idx) => {
@@ -1546,21 +1567,13 @@ async function loadDynamicMenu() {
                 if (brandBannersContainer.children.length === 0) return;
                 const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
                 const gap = window.innerWidth <= 576 ? 16 : 24;
-                const scrollLeft = brandBannersContainer.scrollLeft;
-                const maxScroll = brandBannersContainer.scrollWidth - brandBannersContainer.clientWidth;
+                const step = slideWidth + gap;
                 
-                // If we are at the end, scroll back to the beginning, otherwise scroll to next slide
-                if (scrollLeft >= maxScroll - 10) {
-                    brandBannersContainer.scrollTo({
-                        left: 0,
-                        behavior: 'smooth'
-                    });
-                } else {
-                    brandBannersContainer.scrollBy({
-                        left: slideWidth + gap,
-                        behavior: 'smooth'
-                    });
-                }
+                // Simply scroll right; the scroll listener will snap back seamlessly when hitting threshold
+                brandBannersContainer.scrollBy({
+                    left: step,
+                    behavior: 'smooth'
+                });
             }, AUTOPLAY_DELAY);
         };
 
@@ -1587,10 +1600,28 @@ async function loadDynamicMenu() {
                 resetAutoplay();
                 const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
                 const gap = window.innerWidth <= 576 ? 16 : 24;
-                brandBannersContainer.scrollBy({
-                    left: -(slideWidth + gap),
-                    behavior: 'smooth'
-                });
+                const step = slideWidth + gap;
+                const scrollLeft = brandBannersContainer.scrollLeft;
+                
+                if (scrollLeft <= 5) {
+                    // If at the beginning, instantly jump to threshold, then scroll back to final original item
+                    const threshold = brands.length * step;
+                    brandBannersContainer.scrollTo({
+                        left: threshold,
+                        behavior: 'auto'
+                    });
+                    setTimeout(() => {
+                        brandBannersContainer.scrollBy({
+                            left: -step,
+                            behavior: 'smooth'
+                        });
+                    }, 20);
+                } else {
+                    brandBannersContainer.scrollBy({
+                        left: -step,
+                        behavior: 'smooth'
+                    });
+                }
             };
         }
 
@@ -1599,8 +1630,10 @@ async function loadDynamicMenu() {
                 resetAutoplay();
                 const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
                 const gap = window.innerWidth <= 576 ? 16 : 24;
+                const step = slideWidth + gap;
+                
                 brandBannersContainer.scrollBy({
-                    left: slideWidth + gap,
+                    left: step,
                     behavior: 'smooth'
                 });
             };
