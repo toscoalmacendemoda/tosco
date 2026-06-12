@@ -1466,57 +1466,99 @@ async function loadDynamicMenu() {
         mobileMenuContent.innerHTML = mobileHtml;
     }
 
-    // 3. Render Brand banners
+    // 3. Render Brand banners as a carousel
     const brandBannersContainer = document.getElementById('brand-banners-container');
+    const brandCarouselDots = document.getElementById('brand-carousel-dots');
+    const prevBtn = document.getElementById('brand-prev-btn');
+    const nextBtn = document.getElementById('brand-next-btn');
+
     if (brandBannersContainer && catalogConfig.brands.length > 0) {
         brandBannersContainer.innerHTML = '';
         const brands = catalogConfig.brands;
         
-        const leftCol = document.createElement('div');
-        leftCol.className = 'brand-col-left';
-        leftCol.innerHTML = `
-            <div class="textbanner big-banner" onclick="setCatalogBrand('${brands[0].name}')">
-                <img src="${brands[0].banner}" class="banner-img" alt="${brands[0].name}" onerror="this.src='assets/hero_tosco.png'">
+        // Render slides
+        brands.forEach(brand => {
+            const slide = document.createElement('div');
+            slide.className = 'brand-carousel-slide textbanner';
+            slide.onclick = () => setCatalogBrand(brand.name);
+            slide.innerHTML = `
+                <img src="${brand.banner}" class="banner-img" alt="${brand.name}" onerror="this.src='assets/hero_tosco.png'">
                 <div class="textbanner-text">
-                    <h3 class="textbanner-title">${brands[0].name.toUpperCase()}</h3>
+                    <h3 class="textbanner-title">${brand.name}</h3>
                     <span class="btn-line">ver más</span>
                 </div>
-            </div>
-        `;
-        brandBannersContainer.appendChild(leftCol);
-        
-        if (brands.length > 1) {
-            const rightCol = document.createElement('div');
-            rightCol.className = 'brand-col-right';
-            
-            let rightHtml = `
-                <div class="textbanner wide-banner" onclick="setCatalogBrand('${brands[1].name}')">
-                    <img src="${brands[1].banner}" class="banner-img" alt="${brands[1].name}" onerror="this.src='assets/hero_tosco.png'">
-                    <div class="textbanner-text">
-                        <h3 class="textbanner-title">${brands[1].name}</h3>
-                        <span class="btn-line">ver más</span>
-                    </div>
-                </div>
             `;
-            
-            if (brands.length > 2) {
-                rightHtml += `<div class="brand-row-split">`;
-                for (let i = 2; i < brands.length; i++) {
-                    rightHtml += `
-                        <div class="textbanner square-banner" onclick="setCatalogBrand('${brands[i].name}')">
-                            <img src="${brands[i].banner}" class="banner-img" alt="${brands[i].name}" onerror="this.src='assets/hero_tosco.png'">
-                            <div class="textbanner-text">
-                                <h3 class="textbanner-title" style="font-size: 16px;">${brands[i].name}</h3>
-                                <span class="btn-line">ver más</span>
-                            </div>
-                        </div>
-                    `;
-                }
-                rightHtml += `</div>`;
-            }
-            
-            rightCol.innerHTML = rightHtml;
-            brandBannersContainer.appendChild(rightCol);
+            brandBannersContainer.appendChild(slide);
+        });
+
+        // Render dots
+        if (brandCarouselDots) {
+            brandCarouselDots.innerHTML = '';
+            brands.forEach((_, index) => {
+                const dot = document.createElement('button');
+                dot.className = `carousel-dot${index === 0 ? ' active' : ''}`;
+                dot.setAttribute('aria-label', `Ir a diapositiva ${index + 1}`);
+                dot.onclick = () => {
+                    const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
+                    const gap = window.innerWidth <= 576 ? 16 : 24; // matches CSS gap
+                    brandBannersContainer.scrollTo({
+                        left: index * (slideWidth + gap),
+                        behavior: 'smooth'
+                    });
+                };
+                brandCarouselDots.appendChild(dot);
+            });
         }
+
+        // Helper to update active dot on scroll
+        const updateActiveDot = () => {
+            if (!brandCarouselDots || brandBannersContainer.children.length === 0) return;
+            const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
+            const gap = window.innerWidth <= 576 ? 16 : 24; // matches CSS gap
+            const scrollLeft = brandBannersContainer.scrollLeft;
+            const activeIndex = Math.round(scrollLeft / (slideWidth + gap));
+            
+            const dots = brandCarouselDots.querySelectorAll('.carousel-dot');
+            dots.forEach((dot, idx) => {
+                if (idx === activeIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        };
+
+        // Scroll listener with simple debounce/tick to avoid layout thrashing
+        let scrollTimeout;
+        brandBannersContainer.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(updateActiveDot, 50);
+        });
+
+        // Prev / Next navigation buttons
+        if (prevBtn) {
+            prevBtn.onclick = () => {
+                const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
+                const gap = window.innerWidth <= 576 ? 16 : 24;
+                brandBannersContainer.scrollBy({
+                    left: -(slideWidth + gap),
+                    behavior: 'smooth'
+                });
+            };
+        }
+
+        if (nextBtn) {
+            nextBtn.onclick = () => {
+                const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
+                const gap = window.innerWidth <= 576 ? 16 : 24;
+                brandBannersContainer.scrollBy({
+                    left: slideWidth + gap,
+                    behavior: 'smooth'
+                });
+            };
+        }
+        
+        // Initial run to ensure correct states
+        setTimeout(updateActiveDot, 150);
     }
 }

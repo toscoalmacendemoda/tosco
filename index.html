@@ -161,47 +161,50 @@
         </div>
     </section>
 
-    <!-- MULTI-BRAND CATEGORIES BANNERS -->
+    <!-- MULTI-BRAND CATEGORIES BANNERS (CAROUSEL) -->
     <section class="brand-banners-section animate-fade">
-        <div class="brand-banners-container" id="brand-banners-container">
-            <!-- Left Column: PURO (Big vertical banner) -->
-            <div class="brand-col-left">
-                <div class="textbanner big-banner" onclick="setCatalogBrand('Puro')">
+        <div class="brand-carousel-wrapper">
+            <button class="carousel-btn prev-btn" id="brand-prev-btn" aria-label="Anterior">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            
+            <div class="brand-carousel-track" id="brand-banners-container">
+                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Puro')">
                     <img src="assets/banner_puro.webp" class="banner-img" alt="PURO">
                     <div class="textbanner-text">
                         <h3 class="textbanner-title">PURO</h3>
                         <span class="btn-line">ver más</span>
                     </div>
                 </div>
-            </div>
-            <!-- Right Column: Split layout -->
-            <div class="brand-col-right">
-                <!-- Top Row: Antonia Agosti (Wide banner) -->
-                <div class="textbanner wide-banner" onclick="setCatalogBrand('Antonia Agosti')">
+                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Antonia Agosti')">
                     <img src="assets/banner_agosti.webp" class="banner-img" alt="Antonia Agosti">
                     <div class="textbanner-text">
                         <h3 class="textbanner-title">Antonia Agosti</h3>
                         <span class="btn-line">ver más</span>
                     </div>
                 </div>
-                <!-- Bottom Row: Split columns -->
-                <div class="brand-row-split">
-                    <div class="textbanner square-banner" onclick="setCatalogBrand('Chimmy Churry')">
-                        <img src="assets/banner_chimmy.webp" class="banner-img" alt="Chimmy Churry">
-                        <div class="textbanner-text">
-                            <h3 class="textbanner-title" style="font-size: 16px;">Chimmy Churry</h3>
-                            <span class="btn-line">ver más</span>
-                        </div>
+                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Winndia')">
+                    <img src="assets/banner_winndia.webp" class="banner-img" alt="Winndia">
+                    <div class="textbanner-text">
+                        <h3 class="textbanner-title">Winndia</h3>
+                        <span class="btn-line">ver más</span>
                     </div>
-                    <div class="textbanner square-banner" onclick="setCatalogBrand('Winndia')">
-                        <img src="assets/banner_winndia.webp" class="banner-img" alt="Winndia">
-                        <div class="textbanner-text">
-                            <h3 class="textbanner-title" style="font-size: 16px;">Winndia</h3>
-                            <span class="btn-line">ver más</span>
-                        </div>
+                </div>
+                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Chimmy Churry')">
+                    <img src="assets/banner_chimmy.webp" class="banner-img" alt="Chimmy Churry">
+                    <div class="textbanner-text">
+                        <h3 class="textbanner-title">Chimmy Churry</h3>
+                        <span class="btn-line">ver más</span>
                     </div>
                 </div>
             </div>
+            
+            <button class="carousel-btn next-btn" id="brand-next-btn" aria-label="Siguiente">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+        <div class="brand-carousel-dots" id="brand-carousel-dots">
+            <!-- Dynamically populated or static dots -->
         </div>
     </section>
 
