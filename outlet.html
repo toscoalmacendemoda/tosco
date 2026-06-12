@@ -1,60 +1,210 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <script>
-        window.onerror = function(msg, url, line) {
-            alert("JS Error: " + msg + "\nURL: " + url + "\nLine: " + line);
-            return false;
-        };
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOSCO | Almacén de Moda - Calzado y Accesorios Premium</title>
+    <title>OUTLET — TOSCO Almacén de Moda | Descuentos hasta 70%</title>
     <link rel="shortcut icon" href="assets/logo.webp" type="image/webp">
-    <meta name="description" content="Bienvenido a TOSCO Almacén de Moda. Distribuidor oficial de Puro, Antonia Agosti y Winndia. Compra las mejores zapatillas artísticas, carteras de diseño, calzado de cuero y accesorios en cuotas sin interés y con envío gratis a todo el país.">
-    <meta name="keywords" content="tosco almacen de moda, tosco, puro, antonia agosti, winndia, zapatillas puro, carteras de diseño, calzado de cuero, bolsos y mochilas, cuotas sin interes, envio gratis argentina">
+    <meta name="description" content="Outlet de TOSCO Almacén de Moda. Encontrá los mejores descuentos en calzado, carteras y accesorios de Puro, Antonia Agosti y Winndia. Hasta 70% OFF con envío gratis.">
     <meta name="robots" content="index, follow">
-    <meta name="google-site-verification" content="8CpDOpba9fqizat-HMKNbYeBZLVu_sZ3f7dCfo_E4eA">
-    
-    <!-- Open Graph / Facebook -->
+
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://toscoalmacendemoda.com/">
-    <meta property="og:title" content="TOSCO | Almacén de Moda - Calzado y Accesorios Premium">
-    <meta property="og:description" content="Distribuidor oficial de Puro, Antonia Agosti y Winndia. Calzado artístico, carteras de diseño y accesorios con 3 cuotas sin interés y envío gratis.">
+    <meta property="og:url" content="https://toscoalmacendemoda.com/outlet">
+    <meta property="og:title" content="OUTLET — TOSCO Almacén de Moda | Descuentos hasta 70%">
+    <meta property="og:description" content="Encontrá los mejores descuentos en calzado, carteras y accesorios con envío gratis.">
     <meta property="og:image" content="https://toscoalmacendemoda.com/assets/logo.webp">
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://toscoalmacendemoda.com/">
-    <meta property="twitter:title" content="TOSCO | Almacén de Moda - Calzado y Accesorios Premium">
-    <meta property="twitter:description" content="Distribuidor oficial de Puro, Antonia Agosti y Winndia. Calzado artístico, carteras de diseño y accesorios con 3 cuotas sin interés y envío gratis.">
-    <meta property="twitter:image" content="https://toscoalmacendemoda.com/assets/logo.webp">
-
-    <!-- Schema.org JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "OnlineStore",
-      "name": "TOSCO Almacén de Moda",
-      "url": "https://toscoalmacendemoda.com/",
-      "logo": "https://toscoalmacendemoda.com/assets/logo.webp",
-      "description": "Distribuidor oficial de Puro, Antonia Agosti y Winndia. Calzado artístico, carteras de diseño, calzado de cuero y accesorios con 3 cuotas sin interés y envío gratis.",
-      "telephone": "+5492284620258",
-      "address": {
-        "@type": "PostalAddress",
-        "addressCountry": "AR"
-      },
-      "sameAs": [
-        "https://instagram.com/toscoalmacendemoda"
-      ]
-    }
-    </script>
-
     <link rel="stylesheet" href="style.css">
-    <!-- FontAwesome icons for clean modern layout -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Supabase JS Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* ── OUTLET HERO ── */
+        .outlet-hero {
+            position: relative;
+            width: 100%;
+            min-height: 340px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0d0d0d 0%, #1a0505 40%, #3d0808 70%, #0d0d0d 100%);
+        }
+
+        /* Animated noise-grain texture overlay */
+        .outlet-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* Decorative diagonal stripe */
+        .outlet-hero::after {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 380px;
+            height: 380px;
+            border: 2px solid rgba(220, 50, 50, 0.18);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .outlet-hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 60px 20px;
+            max-width: 700px;
+        }
+
+        .outlet-hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--heading-font);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #e55;
+            border: 1px solid rgba(220, 50, 50, 0.4);
+            padding: 6px 16px;
+            border-radius: 2px;
+            margin-bottom: 20px;
+        }
+
+        .outlet-hero-title {
+            font-family: var(--heading-font);
+            font-size: clamp(52px, 10vw, 96px);
+            font-weight: 900;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 18px;
+        }
+
+        .outlet-hero-title span {
+            color: #e53030;
+        }
+
+        .outlet-hero-sub {
+            font-family: var(--body-font);
+            font-size: 15px;
+            color: rgba(255,255,255,0.55);
+            letter-spacing: 0.5px;
+            margin-bottom: 32px;
+        }
+
+        .outlet-badge-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .outlet-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--heading-font);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #fff;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            padding: 8px 16px;
+            border-radius: 2px;
+        }
+
+        .outlet-badge i { color: #e55; }
+
+        /* ── BACK LINK ── */
+        .outlet-back-bar {
+            background: #f7f5f2;
+            border-bottom: 1px solid var(--gray-medium);
+            padding: 10px 40px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .outlet-back-link {
+            font-family: var(--heading-font);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--gray-dark);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s ease;
+        }
+
+        .outlet-back-link:hover { color: var(--main-foreground); }
+
+        .outlet-back-link i { font-size: 10px; }
+
+        .outlet-back-sep {
+            color: var(--gray-medium);
+            font-size: 11px;
+        }
+
+        .outlet-back-current {
+            font-family: var(--heading-font);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #e53030;
+        }
+
+        /* ── PRODUCTS SECTION ── */
+        .outlet-products-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+
+        .outlet-section-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .outlet-section-title {
+            font-family: var(--heading-font);
+            font-size: 22px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--main-foreground);
+        }
+
+        .outlet-product-count {
+            font-family: var(--body-font);
+            font-size: 13px;
+            color: var(--gray-dark);
+        }
+
+        @media (max-width: 576px) {
+            .outlet-back-bar { padding: 10px 20px; }
+            .outlet-hero { min-height: 260px; }
+        }
+    </style>
 </head>
 <body class="loading-animation">
 
@@ -63,18 +213,16 @@
         <div class="promo-track" id="promo-track-container">
             <span class="promo-item">-3 CUOTAS SIN INTERÉS-</span>
             <span class="promo-item">ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
+            <span class="promo-item">-OUTLET HASTA 70% OFF-</span>
             <span class="promo-item">-3 CUOTAS SIN INTERÉS-</span>
             <span class="promo-item">ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
-            <span class="promo-item">-3 CUOTAS SIN INTERÉS-</span>
-            <span class="promo-item">ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
-            <span class="promo-item">-3 CUOTAS SIN INTERÉS-</span>
-            <span class="promo-item">ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
+            <span class="promo-item">-OUTLET HASTA 70% OFF-</span>
             <span class="promo-item">-3 CUOTAS SIN INTERÉS-</span>
             <span class="promo-item">ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
         </div>
     </div>
 
-    <!-- MAIN HEADER -->
+    <!-- MAIN HEADER (identical to index.html) -->
     <header id="main-header" class="animate-slide-down">
         <div class="header-container">
             <!-- Mobile Menu Toggle -->
@@ -82,44 +230,45 @@
                 <i class="fa-solid fa-bars"></i>
             </button>
 
-            <!-- Navigation Links (Desktop Mega Menu) -->
+            <!-- Navigation Links (Desktop) -->
             <nav class="nav-desktop">
                 <div class="nav-item">
                     Calzado <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>
                     <div class="nav-dropdown">
-                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('zapatillas')">Zapatillas</a>
-                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('sandalias')">Sandalias</a>
-                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('botas')">Botas y Borcegos</a>
+                        <a href="/" class="dropdown-link">Zapatillas</a>
+                        <a href="/" class="dropdown-link">Sandalias</a>
+                        <a href="/" class="dropdown-link">Botas y Borcegos</a>
                     </div>
                 </div>
                 <div class="nav-item">
                     Bolsos y Mochilas <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>
                     <div class="nav-dropdown">
-                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('bandoleras')">Bandoleras</a>
-                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('carteras')">Carteras</a>
-                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('mochilas')">Mochilas</a>
+                        <a href="/" class="dropdown-link">Bandoleras</a>
+                        <a href="/" class="dropdown-link">Carteras</a>
+                        <a href="/" class="dropdown-link">Mochilas</a>
                     </div>
                 </div>
                 <div class="nav-item">
                     Accesorios <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>
                     <div class="nav-dropdown">
-                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('billeteras')">Billeteras</a>
-                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('rinoneras')">Riñoneras</a>
-                        <a href="#" class="dropdown-link" onclick="setCatalogSubcategory('llaveros')">Llaveros</a>
+                        <a href="/" class="dropdown-link">Billeteras</a>
+                        <a href="/" class="dropdown-link">Riñoneras</a>
+                        <a href="/" class="dropdown-link">Llaveros</a>
                     </div>
                 </div>
                 <div class="nav-item">
                     Marcas <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>
                     <div class="nav-dropdown">
-                        <a href="#" class="dropdown-link" onclick="setCatalogBrand('Puro')">Puro</a>
-                        <a href="#" class="dropdown-link" onclick="setCatalogBrand('Antonia Agosti')">Antonia Agosti</a>
-                        <a href="#" class="dropdown-link" onclick="setCatalogBrand('Winndia')">Winndia</a>
+                        <a href="/" class="dropdown-link">Puro</a>
+                        <a href="/" class="dropdown-link">Antonia Agosti</a>
+                        <a href="/" class="dropdown-link">Winndia</a>
                     </div>
                 </div>
-                <a href="#" class="nav-item" onclick="setCatalogFilter('terra')">Terra</a>
+                <a href="/" class="nav-item">Terra</a>
+                <a href="/outlet" class="nav-item" style="color:#e53030; font-weight:700;">OUTLET</a>
             </nav>
 
-            <!-- Store Logo (Tosco Custom Logo from Desktop) -->
+            <!-- Logo -->
             <div class="logo">
                 <a href="/"><img src="assets/logo.webp" alt="TOSCO Almacén de Moda" id="store-logo-img"></a>
             </div>
@@ -141,140 +290,78 @@
         </div>
     </header>
 
-    <!-- SEARCH DYNAMIC INPUT -->
+    <!-- SEARCH BOX -->
     <div id="search-box" style="display: none; padding: 15px; border-bottom: 1px solid var(--gray-medium); background: white;">
         <div style="max-width: 600px; margin: 0 auto; display: flex; gap: 10px;">
-            <input type="text" id="search-input" placeholder="Buscar productos..." style="flex: 1; padding: 12px; border: 1px solid var(--gray-medium); outline: none; font-family: var(--body-font); color: var(--main-foreground);">
+            <input type="text" id="search-input" placeholder="Buscar productos outlet..." style="flex: 1; padding: 12px; border: 1px solid var(--gray-medium); outline: none; font-family: var(--body-font); color: var(--main-foreground);">
             <button id="search-btn" class="btn-premium" style="padding: 10px 20px;">Buscar</button>
         </div>
     </div>
 
-    <!-- HERO HOME SLIDER -->
-    <section class="hero animate-fade">
-        <div class="hero-slide" id="hero-slide-bg" style="background-image: url('assets/hero_tosco.webp');">
-            <div class="hero-overlay"></div>
-            <div class="hero-content">
-                <p class="hero-subtitle">Nueva Colección 2026</p>
-                <h1 class="hero-title">TOSCO ALMACÉN DE MODA</h1>
-                <button class="btn-premium" onclick="scrollToCatalog()">Ver Catálogo</button>
+    <!-- OUTLET HERO -->
+    <section class="outlet-hero animate-fade">
+        <div class="outlet-hero-content">
+            <div class="outlet-hero-eyebrow">
+                <i class="fa-solid fa-tag"></i> Liquidación de temporada
+            </div>
+            <h1 class="outlet-hero-title">OUT<span>LET</span></h1>
+            <p class="outlet-hero-sub">Los mejores precios del año en marcas premium</p>
+            <div class="outlet-badge-row">
+                <span class="outlet-badge"><i class="fa-solid fa-percent"></i> Hasta 70% OFF</span>
+                <span class="outlet-badge"><i class="fa-solid fa-truck"></i> Envío gratis +$250k</span>
+                <span class="outlet-badge"><i class="fa-solid fa-credit-card"></i> 3 cuotas sin interés</span>
             </div>
         </div>
     </section>
 
-    <!-- MULTI-BRAND CATEGORIES BANNERS (MARQUEE CAROUSEL) -->
-    <section class="brand-banners-section animate-fade">
-        <div class="brand-marquee-viewport">
-            <div class="brand-marquee-track" id="brand-banners-container">
-                <!-- JS will populate with brand slides × 3 for seamless loop -->
-                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Puro')">
-                    <img src="assets/banner_puro.webp" class="banner-img" alt="PURO">
-                    <div class="textbanner-text">
-                        <h3 class="textbanner-title">PURO</h3>
-                        <span class="btn-line">ver más</span>
-                    </div>
-                </div>
-                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Antonia Agosti')">
-                    <img src="assets/banner_agosti.webp" class="banner-img" alt="Antonia Agosti">
-                    <div class="textbanner-text">
-                        <h3 class="textbanner-title">Antonia Agosti</h3>
-                        <span class="btn-line">ver más</span>
-                    </div>
-                </div>
-                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Winndia')">
-                    <img src="assets/banner_winndia.webp" class="banner-img" alt="Winndia">
-                    <div class="textbanner-text">
-                        <h3 class="textbanner-title">Winndia</h3>
-                        <span class="btn-line">ver más</span>
-                    </div>
-                </div>
-                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Chimmy Churry')">
-                    <img src="assets/banner_chimmy.webp" class="banner-img" alt="Chimmy Churry">
-                    <div class="textbanner-text">
-                        <h3 class="textbanner-title">Chimmy Churry</h3>
-                        <span class="btn-line">ver más</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- BREADCRUMB -->
+    <div class="outlet-back-bar">
+        <a href="/" class="outlet-back-link"><i class="fa-solid fa-chevron-left"></i> Inicio</a>
+        <span class="outlet-back-sep">/</span>
+        <span class="outlet-back-current">Outlet</span>
+    </div>
 
-    <!-- PRODUCT DISPLAY SECTION -->
-    <section id="catalog-section" style="padding-bottom: 80px;" class="animate-fade">
-        <h2 class="section-title">TIENDA</h2>
-        
+    <!-- PRODUCTS SECTION -->
+    <section class="outlet-products-section animate-fade">
+        <div class="outlet-section-header">
+            <h2 class="outlet-section-title">Productos en Oferta</h2>
+            <span class="outlet-product-count" id="outlet-count"></span>
+        </div>
         <div class="products-container">
-            <!-- Filters list -->
-            <div class="catalog-filter">
-                <button class="filter-btn active" onclick="setCatalogFilter('all')">Todos</button>
-                <button class="filter-btn" onclick="setCatalogFilter('calzado')">Calzado</button>
-                <button class="filter-btn" onclick="setCatalogFilter('bolsos-y-mochilas')">Carteras, Bolsos y Mochilas</button>
-                <button class="filter-btn" onclick="setCatalogFilter('accesorios')">Accesorios</button>
-                <button class="filter-btn" onclick="setCatalogFilter('indumentaria')">Indumentaria</button>
-                <button class="filter-btn" onclick="setCatalogFilter('gift-cards')">Regalá Gift Cards</button>
-                <button class="filter-btn" onclick="setCatalogFilter('terra')">TERRA</button>
-                <button class="filter-btn" onclick="setCatalogFilter('outlet')">OUTLET</button>
-            </div>
-
-            <!-- Dynamic Product Grid -->
             <div class="products-grid" id="products-grid">
-                <!-- Loaded via JS -->
+                <!-- Loaded via outlet.js -->
             </div>
         </div>
     </section>
 
-    <!-- INFO / FEATURES BADGES SECTION -->
-    <section class="info-section animate-fade">
-        <div class="info-container">
-            <div class="info-item">
-                <i class="fa-regular fa-credit-card info-icon"></i>
-                <h3 class="info-title">Tarjetas de crédito</h3>
-                <p class="info-desc">Hasta 3 cuotas sin interés</p>
-            </div>
-            <div class="info-item">
-                <i class="fa-solid fa-truck info-icon"></i>
-                <h3 class="info-title">¡A todo el país!</h3>
-                <p class="info-desc">Gratis en compras superiores a $250.000</p>
-            </div>
-            <a href="https://wa.me/5492284620258" target="_blank" class="info-item link-item">
-                <i class="fa-brands fa-whatsapp info-icon"></i>
-                <h3 class="info-title">Tenés dudas?</h3>
-                <p class="info-desc">Escribinos al 2284620258</p>
-            </a>
-        </div>
-    </section>
-
-    <!-- DRAWER OVERLAY -->
+    <!-- MOBILE MENU DRAWER -->
     <div class="drawer-overlay" id="drawer-overlay"></div>
-
-    <!-- MOBILE MENU SIDEBAR DRAWER -->
-    <div class="drawer" id="mobile-menu-drawer" style="left: -450px; right: auto;">
+    <div class="drawer" id="mobile-menu-drawer" style="max-width: 320px;">
         <div class="drawer-header">
             <h3 class="drawer-title">Menú</h3>
             <button class="drawer-close" id="mobile-menu-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="drawer-content">
+        <div class="drawer-content" id="mobile-menu-content">
             <ul class="footer-links" style="font-size: 16px; line-height: 2.5;">
-                <li><a href="#" onclick="setCatalogFilter('all'); closeMobileMenu();">Inicio</a></li>
-                <li><a href="#" onclick="setCatalogFilter('calzado'); closeMobileMenu();">Calzado</a></li>
-                <li><a href="#" onclick="setCatalogFilter('bolsos-y-mochilas'); closeMobileMenu();">Carteras, Bolsos y Mochilas</a></li>
-                <li><a href="#" onclick="setCatalogFilter('accesorios'); closeMobileMenu();">Accesorios</a></li>
-                <li><a href="#" onclick="setCatalogFilter('indumentaria'); closeMobileMenu();">Indumentaria</a></li>
-                <li><a href="#" onclick="setCatalogFilter('gift-cards'); closeMobileMenu();">Regalá Gift Cards</a></li>
-                <li><a href="#" onclick="setCatalogFilter('terra'); closeMobileMenu();">TERRA</a></li>
-                <li><a href="/outlet">OUTLET</a></li>
+                <li><a href="/">Inicio</a></li>
+                <li><a href="/">Calzado</a></li>
+                <li><a href="/">Carteras, Bolsos y Mochilas</a></li>
+                <li><a href="/">Accesorios</a></li>
+                <li><a href="/">Indumentaria</a></li>
+                <li><a href="/">Gift Cards</a></li>
+                <li><a href="/">Terra</a></li>
+                <li><a href="/outlet" style="color:#e53030; font-weight:700;">OUTLET</a></li>
             </ul>
         </div>
     </div>
 
-    <!-- CART SIDEBAR DRAWER -->
+    <!-- CART DRAWER -->
     <div class="drawer" id="cart-drawer">
         <div class="drawer-header">
             <h3 class="drawer-title">Carrito de Compras</h3>
             <button class="drawer-close" id="cart-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="drawer-content" id="cart-items-container">
-            <!-- Loaded via JS -->
-        </div>
+        <div class="drawer-content" id="cart-items-container"></div>
         <div class="cart-summary">
             <div class="summary-row">
                 <span>Envío Gratis</span>
@@ -284,7 +371,6 @@
                 <div class="shipping-bar" id="shipping-progress"></div>
             </div>
             <p class="shipping-text" id="shipping-hint"></p>
-            
             <div class="summary-row total" style="margin-top: 15px;">
                 <span>Total:</span>
                 <span id="cart-total">$0</span>
@@ -311,9 +397,8 @@
             <button class="drawer-close" id="ai-chat-close" style="color: white;"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="drawer-content" id="ai-messages-container" style="background-color: #faf8f5;">
-            <!-- Preloaded welcome msg -->
             <div class="chat-bubble ai">
-                Hola! 👋 Soy el asistente inteligente de **Tosco Almacén de Moda**. ¿En qué puedo ayudarte hoy?
+                Hola! 👋 Soy el asistente de **Tosco Almacén de Moda**. ¿Buscás algo del Outlet?
             </div>
         </div>
         <div style="padding: 15px; border-top: 1px solid var(--gray-medium); display: flex; flex-direction: column; gap: 10px; background: white;">
@@ -344,14 +429,14 @@
             <div>
                 <h4 class="footer-column-title">Menú</h4>
                 <ul class="footer-links">
-                    <li><a href="#" onclick="setCatalogFilter('all')">Inicio</a></li>
-                    <li><a href="#" onclick="setCatalogFilter('calzado')">Calzado</a></li>
-                    <li><a href="#" onclick="setCatalogFilter('bolsos-y-mochilas')">Carteras, Bolsos y Mochilas</a></li>
-                    <li><a href="#" onclick="setCatalogFilter('accesorios')">Accesorios</a></li>
-                    <li><a href="#" onclick="setCatalogFilter('indumentaria')">Indumentaria</a></li>
-                    <li><a href="#" onclick="setCatalogFilter('gift-cards')">Regalá Gift Cards</a></li>
-                    <li><a href="#" onclick="setCatalogFilter('terra')">Colección TERRA</a></li>
-                    <li><a href="/outlet">OUTLET</a></li>
+                    <li><a href="/">Inicio</a></li>
+                    <li><a href="/">Calzado</a></li>
+                    <li><a href="/">Carteras, Bolsos y Mochilas</a></li>
+                    <li><a href="/">Accesorios</a></li>
+                    <li><a href="/">Indumentaria</a></li>
+                    <li><a href="/">Gift Cards</a></li>
+                    <li><a href="/">Colección TERRA</a></li>
+                    <li><a href="/outlet" style="color:#e53030; font-weight:700;">OUTLET</a></li>
                 </ul>
             </div>
             <div>
@@ -372,12 +457,12 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <div>© Copyright TOSCO - 2026. Todos los derechos reservados. | <a href="admin/" style="text-decoration: underline; font-weight: bold; color: var(--main-foreground);">Panel de Administración</a></div>
+            <div>© Copyright TOSCO - 2026. Todos los derechos reservados.</div>
             <div>Defensa de las y los consumidores.</div>
         </div>
     </footer>
 
-    <!-- CLIENT CHECKOUT MODAL -->
+    <!-- CHECKOUT MODAL -->
     <div id="checkout-modal-container" class="admin-modal-overlay" style="display: none;">
         <div class="admin-modal-box animate-fade" style="max-width: 550px;">
             <div class="admin-modal-header" style="background-color: var(--main-foreground); color: white;">
@@ -411,7 +496,7 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group" style="flex: 2;">
-                        <label for="checkout-address">Dirección (Calle y Altura) *</label>
+                        <label for="checkout-address">Dirección *</label>
                         <input type="text" id="checkout-address" required placeholder="Ej. Av. Sarmiento 1234">
                     </div>
                     <div class="form-group" style="flex: 1;">
@@ -419,45 +504,38 @@
                         <input type="text" id="checkout-zip" required placeholder="Ej. 7400">
                     </div>
                 </div>
-
                 <div class="form-group">
-                    <label style="font-weight: 700; color: var(--gray-dark); margin-bottom: 5px;">Método de Envío (Origen: Olavarría)</label>
+                    <label style="font-weight: 700; color: var(--gray-dark); margin-bottom: 5px;">Método de Envío</label>
                     <div style="display:flex; flex-direction:column; gap:10px;">
-                        <label style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--gray-medium); border-radius:4px; cursor:pointer;" id="carrier-andreani-label">
+                        <label style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--gray-medium); border-radius:4px; cursor:pointer;">
                             <input type="radio" name="shipping-carrier" value="Andreani" checked style="width:auto;">
                             <div style="flex:1;">
                                 <span style="font-weight:bold; color:var(--main-foreground);">Andreani Express</span>
-                                <p style="font-size:11px; color:var(--gray-dark); margin:0;">Llega de 2 a 3 días hábiles</p>
+                                <p style="font-size:11px; color:var(--gray-dark); margin:0;">2 a 3 días hábiles</p>
                             </div>
                             <span id="andreani-cost-display" style="font-weight:bold;">$9.500</span>
                         </label>
-                        <label style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--gray-medium); border-radius:4px; cursor:pointer;" id="carrier-correo-label">
+                        <label style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--gray-medium); border-radius:4px; cursor:pointer;">
                             <input type="radio" name="shipping-carrier" value="Correo Argentino" style="width:auto;">
                             <div style="flex:1;">
                                 <span style="font-weight:bold; color:var(--main-foreground);">Correo Argentino</span>
-                                <p style="font-size:11px; color:var(--gray-dark); margin:0;">Llega de 3 a 5 días hábiles</p>
+                                <p style="font-size:11px; color:var(--gray-dark); margin:0;">3 a 5 días hábiles</p>
                             </div>
                             <span id="correo-cost-display" style="font-weight:bold;">$7.800</span>
                         </label>
                     </div>
                 </div>
-
-                <!-- Checkout Summary -->
                 <div style="background-color: var(--gray-light); padding:15px; border-radius:4px; border:1px solid var(--gray-medium); margin-top:10px;">
                     <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
-                        <span>Subtotal Productos:</span>
-                        <span id="checkout-subtotal">$0</span>
+                        <span>Subtotal:</span><span id="checkout-subtotal">$0</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
-                        <span>Costo de Envío:</span>
-                        <span id="checkout-shipping">$0</span>
+                        <span>Envío:</span><span id="checkout-shipping">$0</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:bold; border-top:1px solid var(--gray-medium); padding-top:8px;">
-                        <span>Total de la Compra:</span>
-                        <span id="checkout-total">$0</span>
+                        <span>Total:</span><span id="checkout-total">$0</span>
                     </div>
                 </div>
-
                 <div class="form-buttons">
                     <button type="button" class="btn-form-cancel" id="checkout-cancel-btn">Cancelar</button>
                     <button type="submit" class="btn-form-save" style="background-color:#27ae60;">Confirmar y Comprar</button>
@@ -466,27 +544,23 @@
         </div>
     </div>
 
-    <!-- CUSTOM CUSTOMER AUTH MODAL -->
+    <!-- AUTH MODAL -->
     <div id="auth-modal-container" class="admin-modal-overlay" style="display: none; justify-content: center; align-items: center; z-index: 1000;">
         <div class="admin-modal-box animate-fade" style="max-width: 400px; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 90%;">
             <div class="admin-modal-header" style="border-bottom: 1px solid var(--gray-medium); padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="font-family: var(--heading-font); font-size: 16px; color: var(--main-foreground); text-transform: uppercase; margin: 0; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-user-lock"></i> Iniciar Sesión</h3>
                 <button class="drawer-close" id="auth-close-btn" style="cursor:pointer; background: none; border: none; font-size: 18px;"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            
-            <!-- Step 1: Input Email -->
             <form id="auth-email-form" style="display: flex; flex-direction: column; gap: 15px;">
-                <p style="font-size: 13px; color: var(--gray-dark); line-height: 1.4; margin: 0;">Ingresa tu correo para recibir un código de verificación de 6 dígitos.</p>
+                <p style="font-size: 13px; color: var(--gray-dark); line-height: 1.4; margin: 0;">Ingresá tu correo para recibir un código de verificación.</p>
                 <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
                     <label for="auth-email" style="font-size: 11px; font-weight: 700; color: var(--gray-dark); text-transform: uppercase;">Correo Electrónico</label>
                     <input type="email" id="auth-email" required placeholder="ejemplo@gmail.com" style="padding: 12px; border: 1px solid var(--gray-medium); border-radius: 4px; outline: none; font-family: var(--body-font); font-size: 13px;">
                 </div>
                 <button type="submit" class="btn-premium" style="width: 100%; padding: 12px; cursor: pointer;">Enviar Código</button>
             </form>
-
-            <!-- Step 2: Input OTP (Hidden by default) -->
             <form id="auth-otp-form" style="display: none; flex-direction: column; gap: 15px;">
-                <p style="font-size: 13px; color: var(--gray-dark); line-height: 1.4; margin: 0;">Ingresa el código de 6 dígitos que te enviamos.</p>
+                <p style="font-size: 13px; color: var(--gray-dark); line-height: 1.4; margin: 0;">Ingresá el código de 6 dígitos que te enviamos.</p>
                 <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
                     <label for="auth-code" style="font-size: 11px; font-weight: 700; color: var(--gray-dark); text-transform: uppercase;">Código de Verificación</label>
                     <input type="text" id="auth-code" required placeholder="123456" maxlength="6" style="padding: 12px; border: 1px solid var(--gray-medium); border-radius: 4px; outline: none; font-family: monospace; font-size: 20px; text-align: center; letter-spacing: 4px;">
@@ -498,32 +572,18 @@
         </div>
     </div>
 
-    <!-- MAINTENANCE MODE OVERLAY -->
-    <div id="maintenance-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: var(--heading-font); padding: 20px;">
-        <img src="assets/logo.webp" alt="TOSCO" style="height: 80px; margin-bottom: 30px;">
-        <h1 style="font-size: 32px; font-weight: 700; color: var(--main-foreground); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;">Tienda en Mantenimiento</h1>
-        <p style="font-family: var(--body-font); font-size: 15px; color: var(--gray-dark); max-width: 500px; line-height: 1.6; margin-bottom: 25px;">
-            Estamos actualizando nuestro catálogo para ofrecerte la mejor experiencia de compra. Volveremos muy pronto. ¡Gracias por tu paciencia!
-        </p>
-        <div style="display: flex; gap: 15px; font-size: 24px;">
-            <a href="https://instagram.com/toscoalmacendemoda" target="_blank" style="color: var(--main-foreground);"><i class="fa-brands fa-instagram"></i></a>
-            <a href="https://wa.me/5492284620258" target="_blank" style="color: var(--main-foreground);"><i class="fa-brands fa-whatsapp"></i></a>
-        </div>
-    </div>
-
     <!-- PRODUCT DETAIL MODAL -->
     <div id="product-detail-modal-container" class="admin-modal-overlay" style="display: none; justify-content: center; align-items: center; z-index: 1009;">
         <div class="admin-modal-box animate-fade" style="max-width: 500px; background: white; border-radius: 8px; box-shadow: 0 4px 25px rgba(0,0,0,0.2); width: 90%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
             <div class="admin-modal-header" style="border-bottom: 1px solid var(--gray-medium); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: #ffffff;">
-                <span id="detail-breadcrumb" style="font-size: 11px; color: var(--gray-dark); text-transform: uppercase; letter-spacing: 0.5px;">Inicio . Calzado</span>
+                <span id="detail-breadcrumb" style="font-size: 11px; color: var(--gray-dark); text-transform: uppercase; letter-spacing: 0.5px;">Outlet</span>
                 <button class="drawer-close" id="product-detail-close-btn" style="cursor:pointer; background: none; border: none; font-size: 18px; color: var(--main-foreground);"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div style="padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;" id="product-detail-body">
-                <!-- Loaded Dynamically via JS -->
-            </div>
+            <div style="padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;" id="product-detail-body"></div>
         </div>
     </div>
 
+    <script src="outlet.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

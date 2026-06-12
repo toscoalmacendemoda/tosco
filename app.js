@@ -23,10 +23,21 @@ const INITIAL_PRODUCTS = [
 ];
 
 // STATE MANAGEMENT
+const isOutletPage = typeof window !== 'undefined' && (window.isOutletPage || window.location.pathname.includes('outlet'));
+
 let db = null;
 let ALL_PRODUCTS = []; // Runtime memory of products
-let cart = []; // In-memory cart only
-let activeCategory = 'all';
+let cart = [];
+try {
+    const storedCart = localStorage.getItem('tosco_cart');
+    if (storedCart) {
+        cart = JSON.parse(storedCart);
+    }
+} catch (e) {
+    console.error("Error loading cart:", e);
+}
+
+let activeCategory = isOutletPage ? 'outlet' : 'all';
 let activeSubcategory = '';
 let activeBrand = '';
 let activeSearchQuery = '';
@@ -34,7 +45,14 @@ let apiShippingRates = {
     Andreani: 9500,
     'Correo Argentino': 7800
 };
-let loggedInUserEmail = null; // In-memory session only
+
+let loggedInUserEmail = null;
+try {
+    loggedInUserEmail = localStorage.getItem('tosco_user_email');
+} catch (e) {
+    console.error("Error loading user email:", e);
+}
+
 
 // SUPABASE CLIENT INITIALIZATION & REALTIME SYNC
 const SUPABASE_URL = "https://yhcozuxkgmobalydznjr.supabase.co";
@@ -286,6 +304,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         await dbInit();
+
+        // Handle URL parameters for filters
+        if (!isOutletPage) {
+            const categoryParam = urlParams.get('category');
+            const subcategoryParam = urlParams.get('subcategory');
+            const brandParam = urlParams.get('brand');
+            
+            if (categoryParam) {
+                activeCategory = categoryParam;
+            } else if (subcategoryParam) {
+                activeSubcategory = subcategoryParam;
+                activeCategory = 'all';
+            } else if (brandParam) {
+                activeBrand = brandParam;
+                activeCategory = 'all';
+            }
+        }
+
         await refreshLocalState();
         await loadDynamicMenu();
         updateCartUI();
@@ -486,6 +522,11 @@ function setupEventListeners() {
 
                 if (response.ok) {
                     loggedInUserEmail = emailVal;
+                    try {
+                        localStorage.setItem('tosco_user_email', emailVal);
+                    } catch (e) {
+                        console.error(e);
+                    }
                     updateAuthHeader();
                     closeAuthModal();
                     alert('¡Sesión iniciada con éxito!');
@@ -546,6 +587,11 @@ window.handleProfileClick = function() {
     if (loggedInUserEmail) {
         if (confirm(`Sesión iniciada como ${loggedInUserEmail}.\n¿Deseas cerrar sesión?`)) {
             loggedInUserEmail = null;
+            try {
+                localStorage.removeItem('tosco_user_email');
+            } catch (e) {
+                console.error(e);
+            }
             updateAuthHeader();
         }
     } else {
@@ -565,8 +611,16 @@ function renderProducts() {
     // Sort products by custom order ascending
     filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
     
-    if (activeCategory !== 'all') {
-        filtered = filtered.filter(p => p.category === activeCategory);
+    if (isOutletPage) {
+        filtered = filtered.filter(p => p.category === 'outlet');
+        const countEl = document.getElementById('outlet-count');
+        if (countEl) {
+            countEl.innerText = `${filtered.length} ${filtered.length === 1 ? 'producto' : 'productos'}`;
+        }
+    } else {
+        if (activeCategory !== 'all') {
+            filtered = filtered.filter(p => p.category === activeCategory);
+        }
     }
     
     if (activeSubcategory) {
@@ -643,28 +697,34 @@ function renderProducts() {
         `;
         productsGrid.appendChild(card);
     });
+    updateFilterButtonsUI();
+}
+
+function updateFilterButtonsUI() {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (activeCategory === 'all' && btn.innerText.toLowerCase().includes('todos')) btn.classList.add('active');
+        if (activeCategory === 'calzado' && btn.innerText.toLowerCase().includes('calzado')) btn.classList.add('active');
+        if (activeCategory === 'bolsos-y-mochilas' && btn.innerText.toLowerCase().includes('bolsos')) btn.classList.add('active');
+        if (activeCategory === 'accesorios' && btn.innerText.toLowerCase().includes('accesorios')) btn.classList.add('active');
+        if (activeCategory === 'indumentaria' && btn.innerText.toLowerCase().includes('indumentaria')) btn.classList.add('active');
+        if (activeCategory === 'terra' && btn.innerText.toLowerCase().includes('terra')) btn.classList.add('active');
+        if (activeCategory === 'gift-cards' && btn.innerText.toLowerCase().includes('gift')) btn.classList.add('active');
+        if (activeCategory === 'outlet' && btn.innerText.toLowerCase().includes('outlet')) btn.classList.add('active');
+    });
 }
 
 // DYNAMIC FILTER TRIGGERS
 window.setCatalogFilter = function(category) {
+    if (category === 'outlet') {
+        window.location.href = '/outlet';
+        return;
+    }
     activeCategory = category;
     activeSubcategory = '';
     activeBrand = '';
     activeSearchQuery = '';
     
-    // Update active filter UI
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (category === 'all' && btn.innerText.toLowerCase().includes('todos')) btn.classList.add('active');
-        if (category === 'calzado' && btn.innerText.toLowerCase().includes('calzado')) btn.classList.add('active');
-        if (category === 'bolsos-y-mochilas' && btn.innerText.toLowerCase().includes('bolsos')) btn.classList.add('active');
-        if (category === 'accesorios' && btn.innerText.toLowerCase().includes('accesorios')) btn.classList.add('active');
-        if (category === 'indumentaria' && btn.innerText.toLowerCase().includes('indumentaria')) btn.classList.add('active');
-        if (category === 'terra' && btn.innerText.toLowerCase().includes('terra')) btn.classList.add('active');
-        if (category === 'gift-cards' && btn.innerText.toLowerCase().includes('gift')) btn.classList.add('active');
-        if (category === 'outlet' && btn.innerText.toLowerCase().includes('outlet')) btn.classList.add('active');
-    });
-
     renderProducts();
     scrollToCatalog();
 };
@@ -846,7 +906,11 @@ window.removeCartItem = function(productId, size) {
 };
 
 function saveCart() {
-    // In-memory cart only, no localStorage write
+    try {
+        localStorage.setItem('tosco_cart', JSON.stringify(cart));
+    } catch (e) {
+        console.error("Error saving cart:", e);
+    }
 }
 
 // DRAWER ACTIONS
@@ -1302,6 +1366,11 @@ window.handleWhatsAppClick = async function(productId) {
             }).catch(e => console.error(e));
 
             loggedInUserEmail = cleanEmail;
+            try {
+                localStorage.setItem('tosco_user_email', cleanEmail);
+            } catch (e) {
+                console.error(e);
+            }
             updateAuthHeader();
         }
     }
@@ -1409,22 +1478,34 @@ async function loadDynamicMenu() {
                 dropdown.className = 'nav-dropdown';
                 subcats.forEach(sub => {
                     const a = document.createElement('a');
-                    a.href = '#';
+                    if (isOutletPage) {
+                        a.href = `/?subcategory=${sub.value}`;
+                    } else {
+                        a.href = '#';
+                        a.onclick = (e) => {
+                            e.preventDefault();
+                            setCatalogSubcategory(sub.value);
+                        };
+                    }
                     a.className = 'dropdown-link';
                     a.innerText = sub.name;
-                    a.onclick = (e) => {
-                        e.preventDefault();
-                        setCatalogSubcategory(sub.value);
-                    };
                     dropdown.appendChild(a);
                 });
                 navItem.appendChild(dropdown);
             } else {
-                navItem.innerHTML = `<a href="#" style="color:inherit; text-decoration:none;">${cat.label}</a>`;
-                navItem.onclick = (e) => {
-                    e.preventDefault();
-                    setCatalogFilter(cat.id);
-                };
+                if (cat.id === 'outlet') {
+                    navItem.innerHTML = `<a href="/outlet" style="color:#e53030; font-weight:700; text-decoration:none;">${cat.label}</a>`;
+                } else {
+                    if (isOutletPage) {
+                        navItem.innerHTML = `<a href="/?category=${cat.id}" style="color:inherit; text-decoration:none;">${cat.label}</a>`;
+                    } else {
+                        navItem.innerHTML = `<a href="#" style="color:inherit; text-decoration:none;">${cat.label}</a>`;
+                        navItem.onclick = (e) => {
+                            e.preventDefault();
+                            setCatalogFilter(cat.id);
+                        };
+                    }
+                }
             }
             desktopNav.appendChild(navItem);
         });
@@ -1437,13 +1518,17 @@ async function loadDynamicMenu() {
         brandsDropdown.className = 'nav-dropdown';
         catalogConfig.brands.forEach(brand => {
             const a = document.createElement('a');
-            a.href = '#';
+            if (isOutletPage) {
+                a.href = `/?brand=${encodeURIComponent(brand.name)}`;
+            } else {
+                a.href = '#';
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    setCatalogBrand(brand.name);
+                };
+            }
             a.className = 'dropdown-link';
             a.innerText = brand.name;
-            a.onclick = (e) => {
-                e.preventDefault();
-                setCatalogBrand(brand.name);
-            };
             brandsDropdown.appendChild(a);
         });
         brandsNavItem.appendChild(brandsDropdown);
@@ -1454,14 +1539,25 @@ async function loadDynamicMenu() {
     const mobileMenuContent = document.querySelector('#mobile-menu-drawer .drawer-content');
     if (mobileMenuContent) {
         let mobileHtml = `<ul class="footer-links" style="font-size: 16px; line-height: 2.5;">`;
-        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('all'); closeMobileMenu();">Inicio</a></li>`;
-        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('calzado'); closeMobileMenu();">Calzado</a></li>`;
-        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('bolsos-y-mochilas'); closeMobileMenu();">Carteras, Bolsos y Mochilas</a></li>`;
-        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('accesorios'); closeMobileMenu();">Accesorios</a></li>`;
-        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('indumentaria'); closeMobileMenu();">Indumentaria</a></li>`;
-        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('gift-cards'); closeMobileMenu();">Gift Cards</a></li>`;
-        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('terra'); closeMobileMenu();">TERRA</a></li>`;
-        mobileHtml += `<li><a href="#" onclick="setCatalogFilter('outlet'); closeMobileMenu();">OUTLET</a></li>`;
+        if (isOutletPage) {
+            mobileHtml += `<li><a href="/">Inicio</a></li>`;
+            mobileHtml += `<li><a href="/?category=calzado">Calzado</a></li>`;
+            mobileHtml += `<li><a href="/?category=bolsos-y-mochilas">Carteras, Bolsos y Mochilas</a></li>`;
+            mobileHtml += `<li><a href="/?category=accesorios">Accesorios</a></li>`;
+            mobileHtml += `<li><a href="/?category=indumentaria">Indumentaria</a></li>`;
+            mobileHtml += `<li><a href="/?category=gift-cards">Gift Cards</a></li>`;
+            mobileHtml += `<li><a href="/?category=terra">TERRA</a></li>`;
+            mobileHtml += `<li><a href="/outlet" style="color:#e53030; font-weight:700;">OUTLET</a></li>`;
+        } else {
+            mobileHtml += `<li><a href="#" onclick="setCatalogFilter('all'); closeMobileMenu();">Inicio</a></li>`;
+            mobileHtml += `<li><a href="#" onclick="setCatalogFilter('calzado'); closeMobileMenu();">Calzado</a></li>`;
+            mobileHtml += `<li><a href="#" onclick="setCatalogFilter('bolsos-y-mochilas'); closeMobileMenu();">Carteras, Bolsos y Mochilas</a></li>`;
+            mobileHtml += `<li><a href="#" onclick="setCatalogFilter('accesorios'); closeMobileMenu();">Accesorios</a></li>`;
+            mobileHtml += `<li><a href="#" onclick="setCatalogFilter('indumentaria'); closeMobileMenu();">Indumentaria</a></li>`;
+            mobileHtml += `<li><a href="#" onclick="setCatalogFilter('gift-cards'); closeMobileMenu();">Gift Cards</a></li>`;
+            mobileHtml += `<li><a href="#" onclick="setCatalogFilter('terra'); closeMobileMenu();">TERRA</a></li>`;
+            mobileHtml += `<li><a href="/outlet" onclick="closeMobileMenu();" style="color:#e53030; font-weight:700;">OUTLET</a></li>`;
+        }
         mobileHtml += `</ul>`;
         mobileMenuContent.innerHTML = mobileHtml;
     }
