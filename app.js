@@ -1466,7 +1466,7 @@ async function loadDynamicMenu() {
         mobileMenuContent.innerHTML = mobileHtml;
     }
 
-    // 3. Render Brand banners as a carousel
+    // 3. Render Brand banners as a seamless auto-rotating carousel (calesita)
     const brandBannersContainer = document.getElementById('brand-banners-container');
     const brandCarouselDots = document.getElementById('brand-carousel-dots');
     const prevBtn = document.getElementById('brand-prev-btn');
@@ -1475,17 +1475,13 @@ async function loadDynamicMenu() {
     if (brandBannersContainer && catalogConfig.brands.length > 0) {
         brandBannersContainer.innerHTML = '';
         const brands = catalogConfig.brands;
-        
-        // Create cloned items for infinite loop (calesita)
-        // We clone the first 3 items because desktop displays 3 items at a time
-        const brandsToRender = [...brands];
-        const cloneCount = Math.min(3, brands.length);
-        for (let i = 0; i < cloneCount; i++) {
-            brandsToRender.push(brands[i]);
-        }
-        
-        // Render slides (including clones)
-        brandsToRender.forEach((brand, idx) => {
+
+        // Duplicate slides for seamless infinite loop:
+        // [brand1, brand2, brand3, brand4, brand1, brand2, brand3, brand4]
+        // When we animate to slide index 4 (the clone of brand1), we silently jump back to index 0
+        const allSlides = [...brands, ...brands];
+
+        allSlides.forEach((brand) => {
             const slide = document.createElement('div');
             slide.className = 'brand-carousel-slide textbanner';
             slide.onclick = () => setCatalogBrand(brand.name);
@@ -1499,150 +1495,143 @@ async function loadDynamicMenu() {
             brandBannersContainer.appendChild(slide);
         });
 
-        // Render dots (only for original brands)
+        // Render dots (only for original brands, not clones)
         if (brandCarouselDots) {
             brandCarouselDots.innerHTML = '';
             brands.forEach((_, index) => {
                 const dot = document.createElement('button');
                 dot.className = `carousel-dot${index === 0 ? ' active' : ''}`;
                 dot.setAttribute('aria-label', `Ir a diapositiva ${index + 1}`);
-                dot.onclick = () => {
-                    resetAutoplay();
-                    const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
-                    const gap = window.innerWidth <= 576 ? 16 : 24; // matches CSS gap
-                    brandBannersContainer.scrollTo({
-                        left: index * (slideWidth + gap),
-                        behavior: 'smooth'
-                    });
-                };
                 brandCarouselDots.appendChild(dot);
             });
         }
 
-        // Helper to update active dot on scroll & perform infinite loop scroll adjustment
-        const updateActiveDot = () => {
-            if (!brandCarouselDots || brandBannersContainer.children.length === 0) return;
-            const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
-            const gap = window.innerWidth <= 576 ? 16 : 24; // matches CSS gap
-            const step = slideWidth + gap;
-            const scrollLeft = brandBannersContainer.scrollLeft;
-            
-            const threshold = brands.length * step;
-            
-            // Infinite loop check: if we scrolled to the cloned start, reset scroll position instantly to original start
-            if (scrollLeft >= threshold - 5) {
-                brandBannersContainer.scrollTo({
-                    left: scrollLeft - threshold,
-                    behavior: 'auto'
-                });
-                return;
-            }
-            
-            const activeIndex = Math.round(scrollLeft / step) % brands.length;
-            
-            const dots = brandCarouselDots.querySelectorAll('.carousel-dot');
-            dots.forEach((dot, idx) => {
-                if (idx === activeIndex) {
-                    dot.classList.add('active');
-                } else {
-                    dot.classList.remove('active');
-                }
+        let currentIndex = 0;
+        let isTransitioning = false;
+        let autoplayTimer = null;
+
+        // Calculate the pixel distance of one slide step
+        const getStep = () => {
+            const firstSlide = brandBannersContainer.firstElementChild;
+            if (!firstSlide) return 0;
+            const slideWidth = firstSlide.getBoundingClientRect().width;
+            const gap = window.innerWidth <= 576 ? 16 : 24;
+            return slideWidth + gap;
+        };
+
+        // Update active dot indicator
+        const updateDots = (index) => {
+            if (!brandCarouselDots) return;
+            const realIndex = index % brands.length;
+            brandCarouselDots.querySelectorAll('.carousel-dot').forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === realIndex);
             });
         };
 
-        // Scroll listener with simple debounce/tick to avoid layout thrashing
-        let scrollTimeout;
-        brandBannersContainer.addEventListener('scroll', () => {
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(updateActiveDot, 50);
-        });
-
-        // Autoplay carousel logic
-        let autoplayInterval;
-        const AUTOPLAY_DELAY = 4000; // 4 seconds
-
-        const startAutoplay = () => {
-            stopAutoplay(); // Clear any existing intervals
-            autoplayInterval = setInterval(() => {
-                if (brandBannersContainer.children.length === 0) return;
-                const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
-                const gap = window.innerWidth <= 576 ? 16 : 24;
-                const step = slideWidth + gap;
-                
-                // Simply scroll right; the scroll listener will snap back seamlessly when hitting threshold
-                brandBannersContainer.scrollBy({
-                    left: step,
-                    behavior: 'smooth'
-                });
-            }, AUTOPLAY_DELAY);
+        // Scroll to a specific slide index
+        const goToSlide = (index, animated = true) => {
+            const step = getStep();
+            if (step === 0) return;
+            brandBannersContainer.scrollTo({
+                left: index * step,
+                behavior: animated ? 'smooth' : 'auto'
+            });
+            updateDots(index);
         };
 
-        const stopAutoplay = () => {
-            if (autoplayInterval) {
-                clearInterval(autoplayInterval);
+        // Advance to next slide (with infinite wrap-around)
+        const nextSlide = () => {
+            if (isTransitioning) return;
+            currentIndex++;
+
+            if (currentIndex >= brands.length) {
+                // Animate smoothly into the duplicate slide (looks identical to real slide 0)
+                isTransitioning = true;
+                goToSlide(currentIndex, true);
+                // Once animation is done (~650ms), silently teleport back to real slide 0
+                setTimeout(() => {
+                    currentIndex = 0;
+                    goToSlide(0, false);
+                    isTransitioning = false;
+                }, 650);
+            } else {
+                goToSlide(currentIndex, true);
             }
         };
 
-        const resetAutoplay = () => {
-            stopAutoplay();
-            startAutoplay();
+        // Go back one slide (with infinite wrap-around)
+        const prevSlide = () => {
+            if (isTransitioning) return;
+
+            if (currentIndex <= 0) {
+                // Silently teleport to the last clone position, then animate back
+                isTransitioning = true;
+                goToSlide(brands.length, false);
+                setTimeout(() => {
+                    currentIndex = brands.length - 1;
+                    goToSlide(currentIndex, true);
+                    setTimeout(() => { isTransitioning = false; }, 650);
+                }, 30);
+            } else {
+                currentIndex--;
+                goToSlide(currentIndex, true);
+            }
         };
 
-        // Pause autoplay on mouse enter / touch start and resume on mouse leave / touch end
+        // Autoplay controls
+        const startAutoplay = () => {
+            if (autoplayTimer) clearInterval(autoplayTimer);
+            autoplayTimer = setInterval(nextSlide, 3500);
+        };
+
+        const stopAutoplay = () => {
+            if (autoplayTimer) {
+                clearInterval(autoplayTimer);
+                autoplayTimer = null;
+            }
+        };
+
+        // Pause on hover / touch, resume on leave
         brandBannersContainer.addEventListener('mouseenter', stopAutoplay);
         brandBannersContainer.addEventListener('mouseleave', startAutoplay);
         brandBannersContainer.addEventListener('touchstart', stopAutoplay, { passive: true });
         brandBannersContainer.addEventListener('touchend', startAutoplay, { passive: true });
 
-        // Prev / Next navigation buttons
+        // Dot navigation
+        if (brandCarouselDots) {
+            brandCarouselDots.querySelectorAll('.carousel-dot').forEach((dot, index) => {
+                dot.onclick = () => {
+                    stopAutoplay();
+                    if (!isTransitioning) {
+                        currentIndex = index;
+                        goToSlide(currentIndex, true);
+                    }
+                    setTimeout(startAutoplay, 3500);
+                };
+            });
+        }
+
+        // Arrow buttons
         if (prevBtn) {
             prevBtn.onclick = () => {
-                resetAutoplay();
-                const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
-                const gap = window.innerWidth <= 576 ? 16 : 24;
-                const step = slideWidth + gap;
-                const scrollLeft = brandBannersContainer.scrollLeft;
-                
-                if (scrollLeft <= 5) {
-                    // If at the beginning, instantly jump to threshold, then scroll back to final original item
-                    const threshold = brands.length * step;
-                    brandBannersContainer.scrollTo({
-                        left: threshold,
-                        behavior: 'auto'
-                    });
-                    setTimeout(() => {
-                        brandBannersContainer.scrollBy({
-                            left: -step,
-                            behavior: 'smooth'
-                        });
-                    }, 20);
-                } else {
-                    brandBannersContainer.scrollBy({
-                        left: -step,
-                        behavior: 'smooth'
-                    });
-                }
+                stopAutoplay();
+                prevSlide();
+                setTimeout(startAutoplay, 3500);
             };
         }
 
         if (nextBtn) {
             nextBtn.onclick = () => {
-                resetAutoplay();
-                const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
-                const gap = window.innerWidth <= 576 ? 16 : 24;
-                const step = slideWidth + gap;
-                
-                brandBannersContainer.scrollBy({
-                    left: step,
-                    behavior: 'smooth'
-                });
+                stopAutoplay();
+                nextSlide();
+                setTimeout(startAutoplay, 3500);
             };
         }
-        
-        // Initial run to ensure correct states and start autoplay
+
+        // Initialize position and start autoplay after a short delay
         setTimeout(() => {
-            updateActiveDot();
+            goToSlide(0, false);
             startAutoplay();
-        }, 150);
+        }, 200);
     }
 }
