@@ -1499,6 +1499,7 @@ async function loadDynamicMenu() {
                 dot.className = `carousel-dot${index === 0 ? ' active' : ''}`;
                 dot.setAttribute('aria-label', `Ir a diapositiva ${index + 1}`);
                 dot.onclick = () => {
+                    resetAutoplay();
                     const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
                     const gap = window.innerWidth <= 576 ? 16 : 24; // matches CSS gap
                     brandBannersContainer.scrollTo({
@@ -1535,9 +1536,55 @@ async function loadDynamicMenu() {
             scrollTimeout = setTimeout(updateActiveDot, 50);
         });
 
+        // Autoplay carousel logic
+        let autoplayInterval;
+        const AUTOPLAY_DELAY = 4000; // 4 seconds
+
+        const startAutoplay = () => {
+            stopAutoplay(); // Clear any existing intervals
+            autoplayInterval = setInterval(() => {
+                if (brandBannersContainer.children.length === 0) return;
+                const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
+                const gap = window.innerWidth <= 576 ? 16 : 24;
+                const scrollLeft = brandBannersContainer.scrollLeft;
+                const maxScroll = brandBannersContainer.scrollWidth - brandBannersContainer.clientWidth;
+                
+                // If we are at the end, scroll back to the beginning, otherwise scroll to next slide
+                if (scrollLeft >= maxScroll - 10) {
+                    brandBannersContainer.scrollTo({
+                        left: 0,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    brandBannersContainer.scrollBy({
+                        left: slideWidth + gap,
+                        behavior: 'smooth'
+                    });
+                }
+            }, AUTOPLAY_DELAY);
+        };
+
+        const stopAutoplay = () => {
+            if (autoplayInterval) {
+                clearInterval(autoplayInterval);
+            }
+        };
+
+        const resetAutoplay = () => {
+            stopAutoplay();
+            startAutoplay();
+        };
+
+        // Pause autoplay on mouse enter / touch start and resume on mouse leave / touch end
+        brandBannersContainer.addEventListener('mouseenter', stopAutoplay);
+        brandBannersContainer.addEventListener('mouseleave', startAutoplay);
+        brandBannersContainer.addEventListener('touchstart', stopAutoplay, { passive: true });
+        brandBannersContainer.addEventListener('touchend', startAutoplay, { passive: true });
+
         // Prev / Next navigation buttons
         if (prevBtn) {
             prevBtn.onclick = () => {
+                resetAutoplay();
                 const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
                 const gap = window.innerWidth <= 576 ? 16 : 24;
                 brandBannersContainer.scrollBy({
@@ -1549,6 +1596,7 @@ async function loadDynamicMenu() {
 
         if (nextBtn) {
             nextBtn.onclick = () => {
+                resetAutoplay();
                 const slideWidth = brandBannersContainer.firstElementChild.getBoundingClientRect().width;
                 const gap = window.innerWidth <= 576 ? 16 : 24;
                 brandBannersContainer.scrollBy({
@@ -1558,7 +1606,10 @@ async function loadDynamicMenu() {
             };
         }
         
-        // Initial run to ensure correct states
-        setTimeout(updateActiveDot, 150);
+        // Initial run to ensure correct states and start autoplay
+        setTimeout(() => {
+            updateActiveDot();
+            startAutoplay();
+        }, 150);
     }
 }
