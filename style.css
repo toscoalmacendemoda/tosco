@@ -1081,59 +1081,80 @@ footer {
     }
 }
 
-/* MULTI-BRAND CATEGORIES BANNERS - PREMIUM CAROUSEL */
+/* MULTI-BRAND CATEGORIES BANNERS - MARQUEE INFINITE SCROLL */
 .brand-banners-section {
-    padding: 40px 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-    position: relative;
+    padding: 40px 0;
+    overflow: hidden;
 }
 
-.brand-carousel-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
+/* The visible window — hides overflow on both sides */
+.brand-marquee-viewport {
     width: 100%;
+    overflow: hidden;
+    position: relative;
 }
 
-.brand-carousel-track {
+/* Fade-out edges for elegant entry/exit */
+.brand-marquee-viewport::before,
+.brand-marquee-viewport::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    z-index: 2;
+    pointer-events: none;
+}
+.brand-marquee-viewport::before {
+    left: 0;
+    background: linear-gradient(to right, var(--main-background, #fff), transparent);
+}
+.brand-marquee-viewport::after {
+    right: 0;
+    background: linear-gradient(to left, var(--main-background, #fff), transparent);
+}
+
+/* The moving track — JS will set --track-width and clone slides */
+@keyframes marquee-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(var(--marquee-shift, -50%)); }
+}
+
+.brand-marquee-track {
     display: flex;
     gap: 24px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE and Edge */
-    width: 100%;
-    padding: 10px 0;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    width: max-content;           /* grow to fit all slides */
+    padding: 10px 12px;
+    animation: marquee-scroll var(--marquee-duration, 28s) linear infinite;
+    will-change: transform;
 }
 
-.brand-carousel-track::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+/* Pause on hover */
+.brand-marquee-track:hover {
+    animation-play-state: paused;
 }
 
+/* Individual slide */
 .brand-carousel-slide {
-    flex: 0 0 calc((100% - 48px) / 3); /* Desktop: 3 items, gap 24px */
-    scroll-snap-align: start;
+    flex: 0 0 380px;              /* fixed width desktop */
     box-sizing: border-box;
     position: relative;
     border-radius: 8px;
     overflow: hidden;
     height: 380px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
     transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    cursor: pointer;
 }
 
 .brand-carousel-slide:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+    transform: translateY(-6px) scale(1.015);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.14);
 }
 
 .textbanner {
     position: relative;
     overflow: hidden;
-    cursor: pointer;
     border: 1px solid var(--gray-medium);
 }
 
@@ -1146,7 +1167,7 @@ footer {
 }
 
 .textbanner:hover .banner-img {
-    transform: scale(1.03);
+    transform: scale(1.04);
 }
 
 .textbanner-text {
@@ -1155,7 +1176,7 @@ footer {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(rgba(0,0,0,0.1), rgba(0, 0, 0, 0.8));
+    background: linear-gradient(rgba(0,0,0,0.05), rgba(0, 0, 0, 0.75));
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -1181,92 +1202,28 @@ footer {
     text-decoration: underline;
 }
 
-/* Navigation Buttons */
-.carousel-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.95);
-    border: 1px solid var(--gray-medium);
-    color: var(--main-foreground);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-}
-
-.carousel-btn:hover {
-    background-color: var(--main-foreground);
-    color: #ffffff;
-    border-color: var(--main-foreground);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-}
-
-.carousel-btn.prev-btn {
-    left: -24px;
-}
-
-.carousel-btn.next-btn {
-    right: -24px;
-}
-
-/* Dot Indicators */
-.brand-carousel-dots {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 20px;
-}
-
-.carousel-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--gray-medium);
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 0;
-}
-
-.carousel-dot.active {
-    width: 24px;
-    border-radius: 4px;
-    background-color: var(--main-foreground);
-}
-
-/* RESPONSIVE BREAKPOINTS */
+/* Responsive slide size */
 @media (max-width: 992px) {
     .brand-carousel-slide {
-        flex: 0 0 calc((100% - 24px) / 2); /* Tablet: 2 items, gap 24px */
-        height: 320px;
-    }
-    .carousel-btn.prev-btn {
-        left: -10px;
-    }
-    .carousel-btn.next-btn {
-        right: -10px;
+        flex: 0 0 300px;
+        height: 300px;
     }
 }
 
 @media (max-width: 576px) {
     .brand-carousel-slide {
-        flex: 0 0 100%; /* Mobile: 1 item */
-        height: 280px;
+        flex: 0 0 260px;
+        height: 260px;
     }
-    .carousel-btn {
-        display: none !important;
-    }
-    .brand-carousel-track {
+    .brand-marquee-track {
         gap: 16px;
     }
+    .brand-marquee-viewport::before,
+    .brand-marquee-viewport::after {
+        width: 40px;
+    }
 }
+
 
 /* ==========================================================================
    ADMIN PANEL STYLING (TIENDANUBE INSPIRED)

@@ -161,14 +161,11 @@
         </div>
     </section>
 
-    <!-- MULTI-BRAND CATEGORIES BANNERS (CAROUSEL) -->
+    <!-- MULTI-BRAND CATEGORIES BANNERS (MARQUEE CAROUSEL) -->
     <section class="brand-banners-section animate-fade">
-        <div class="brand-carousel-wrapper">
-            <button class="carousel-btn prev-btn" id="brand-prev-btn" aria-label="Anterior">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            
-            <div class="brand-carousel-track" id="brand-banners-container">
+        <div class="brand-marquee-viewport">
+            <div class="brand-marquee-track" id="brand-banners-container">
+                <!-- JS will populate with brand slides × 3 for seamless loop -->
                 <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Puro')">
                     <img src="assets/banner_puro.webp" class="banner-img" alt="PURO">
                     <div class="textbanner-text">
@@ -197,36 +194,7 @@
                         <span class="btn-line">ver más</span>
                     </div>
                 </div>
-                <!-- Clones for infinite carousel loop -->
-                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Puro')">
-                    <img src="assets/banner_puro.webp" class="banner-img" alt="PURO">
-                    <div class="textbanner-text">
-                        <h3 class="textbanner-title">PURO</h3>
-                        <span class="btn-line">ver más</span>
-                    </div>
-                </div>
-                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Antonia Agosti')">
-                    <img src="assets/banner_agosti.webp" class="banner-img" alt="Antonia Agosti">
-                    <div class="textbanner-text">
-                        <h3 class="textbanner-title">Antonia Agosti</h3>
-                        <span class="btn-line">ver más</span>
-                    </div>
-                </div>
-                <div class="brand-carousel-slide textbanner" onclick="setCatalogBrand('Winndia')">
-                    <img src="assets/banner_winndia.webp" class="banner-img" alt="Winndia">
-                    <div class="textbanner-text">
-                        <h3 class="textbanner-title">Winndia</h3>
-                        <span class="btn-line">ver más</span>
-                    </div>
-                </div>
             </div>
-            
-            <button class="carousel-btn next-btn" id="brand-next-btn" aria-label="Siguiente">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </div>
-        <div class="brand-carousel-dots" id="brand-carousel-dots">
-            <!-- Dynamically populated or static dots -->
         </div>
     </section>
 

@@ -1466,22 +1466,15 @@ async function loadDynamicMenu() {
         mobileMenuContent.innerHTML = mobileHtml;
     }
 
-    // 3. Render Brand banners as a seamless auto-rotating carousel (calesita)
-    const brandBannersContainer = document.getElementById('brand-banners-container');
-    const brandCarouselDots = document.getElementById('brand-carousel-dots');
-    const prevBtn = document.getElementById('brand-prev-btn');
-    const nextBtn = document.getElementById('brand-next-btn');
+    // 3. Render Brand banners as a continuous marquee (calesita)
+    const brandTrack = document.getElementById('brand-banners-container');
 
-    if (brandBannersContainer && catalogConfig.brands.length > 0) {
-        brandBannersContainer.innerHTML = '';
+    if (brandTrack && catalogConfig.brands.length > 0) {
+        brandTrack.innerHTML = '';
         const brands = catalogConfig.brands;
 
-        // Duplicate slides for seamless infinite loop:
-        // [brand1, brand2, brand3, brand4, brand1, brand2, brand3, brand4]
-        // When we animate to slide index 4 (the clone of brand1), we silently jump back to index 0
-        const allSlides = [...brands, ...brands];
-
-        allSlides.forEach((brand) => {
+        // Helper to build one slide element
+        const makeSlide = (brand) => {
             const slide = document.createElement('div');
             slide.className = 'brand-carousel-slide textbanner';
             slide.onclick = () => setCatalogBrand(brand.name);
@@ -1492,146 +1485,41 @@ async function loadDynamicMenu() {
                     <span class="btn-line">ver más</span>
                 </div>
             `;
-            brandBannersContainer.appendChild(slide);
+            return slide;
+        };
+
+        // Duplicate slides enough times to ensure seamless loop.
+        // We use 3 copies: the animation shifts by exactly 1 copy width (-33.33%),
+        // which returns the track to its starting visual position.
+        const copies = 3;
+        for (let c = 0; c < copies; c++) {
+            brands.forEach(brand => brandTrack.appendChild(makeSlide(brand)));
+        }
+
+        // After slides are in the DOM, calculate the exact pixel width of ONE copy
+        // and set the CSS custom property so the keyframe knows how far to shift.
+        requestAnimationFrame(() => {
+            const slideCount  = brands.length;
+            const totalSlides = slideCount * copies;
+            const gap = parseFloat(getComputedStyle(brandTrack).gap) || 24;
+            const slideW = brandTrack.firstElementChild
+                ? brandTrack.firstElementChild.getBoundingClientRect().width
+                : 380;
+
+            // Width of one full set of slides (1 copy)
+            const oneCopyPx = slideCount * (slideW + gap);
+            // Total track width
+            const totalPx   = totalSlides * (slideW + gap);
+
+            // We shift by exactly one copy so the loop is invisible
+            const shiftPct  = -((oneCopyPx / totalPx) * 100).toFixed(4) + '%';
+
+            // Speed: ~120px per second feels natural
+            const speed = 100; // px/s
+            const duration = (oneCopyPx / speed).toFixed(1) + 's';
+
+            brandTrack.style.setProperty('--marquee-shift', shiftPct);
+            brandTrack.style.setProperty('--marquee-duration', duration);
         });
-
-        // Render dots (only for original brands, not clones)
-        if (brandCarouselDots) {
-            brandCarouselDots.innerHTML = '';
-            brands.forEach((_, index) => {
-                const dot = document.createElement('button');
-                dot.className = `carousel-dot${index === 0 ? ' active' : ''}`;
-                dot.setAttribute('aria-label', `Ir a diapositiva ${index + 1}`);
-                brandCarouselDots.appendChild(dot);
-            });
-        }
-
-        let currentIndex = 0;
-        let isTransitioning = false;
-        let autoplayTimer = null;
-
-        // Calculate the pixel distance of one slide step
-        const getStep = () => {
-            const firstSlide = brandBannersContainer.firstElementChild;
-            if (!firstSlide) return 0;
-            const slideWidth = firstSlide.getBoundingClientRect().width;
-            const gap = window.innerWidth <= 576 ? 16 : 24;
-            return slideWidth + gap;
-        };
-
-        // Update active dot indicator
-        const updateDots = (index) => {
-            if (!brandCarouselDots) return;
-            const realIndex = index % brands.length;
-            brandCarouselDots.querySelectorAll('.carousel-dot').forEach((dot, idx) => {
-                dot.classList.toggle('active', idx === realIndex);
-            });
-        };
-
-        // Scroll to a specific slide index
-        const goToSlide = (index, animated = true) => {
-            const step = getStep();
-            if (step === 0) return;
-            brandBannersContainer.scrollTo({
-                left: index * step,
-                behavior: animated ? 'smooth' : 'auto'
-            });
-            updateDots(index);
-        };
-
-        // Advance to next slide (with infinite wrap-around)
-        const nextSlide = () => {
-            if (isTransitioning) return;
-            currentIndex++;
-
-            if (currentIndex >= brands.length) {
-                // Animate smoothly into the duplicate slide (looks identical to real slide 0)
-                isTransitioning = true;
-                goToSlide(currentIndex, true);
-                // Once animation is done (~650ms), silently teleport back to real slide 0
-                setTimeout(() => {
-                    currentIndex = 0;
-                    goToSlide(0, false);
-                    isTransitioning = false;
-                }, 650);
-            } else {
-                goToSlide(currentIndex, true);
-            }
-        };
-
-        // Go back one slide (with infinite wrap-around)
-        const prevSlide = () => {
-            if (isTransitioning) return;
-
-            if (currentIndex <= 0) {
-                // Silently teleport to the last clone position, then animate back
-                isTransitioning = true;
-                goToSlide(brands.length, false);
-                setTimeout(() => {
-                    currentIndex = brands.length - 1;
-                    goToSlide(currentIndex, true);
-                    setTimeout(() => { isTransitioning = false; }, 650);
-                }, 30);
-            } else {
-                currentIndex--;
-                goToSlide(currentIndex, true);
-            }
-        };
-
-        // Autoplay controls
-        const startAutoplay = () => {
-            if (autoplayTimer) clearInterval(autoplayTimer);
-            autoplayTimer = setInterval(nextSlide, 3500);
-        };
-
-        const stopAutoplay = () => {
-            if (autoplayTimer) {
-                clearInterval(autoplayTimer);
-                autoplayTimer = null;
-            }
-        };
-
-        // Pause on hover / touch, resume on leave
-        brandBannersContainer.addEventListener('mouseenter', stopAutoplay);
-        brandBannersContainer.addEventListener('mouseleave', startAutoplay);
-        brandBannersContainer.addEventListener('touchstart', stopAutoplay, { passive: true });
-        brandBannersContainer.addEventListener('touchend', startAutoplay, { passive: true });
-
-        // Dot navigation
-        if (brandCarouselDots) {
-            brandCarouselDots.querySelectorAll('.carousel-dot').forEach((dot, index) => {
-                dot.onclick = () => {
-                    stopAutoplay();
-                    if (!isTransitioning) {
-                        currentIndex = index;
-                        goToSlide(currentIndex, true);
-                    }
-                    setTimeout(startAutoplay, 3500);
-                };
-            });
-        }
-
-        // Arrow buttons
-        if (prevBtn) {
-            prevBtn.onclick = () => {
-                stopAutoplay();
-                prevSlide();
-                setTimeout(startAutoplay, 3500);
-            };
-        }
-
-        if (nextBtn) {
-            nextBtn.onclick = () => {
-                stopAutoplay();
-                nextSlide();
-                setTimeout(startAutoplay, 3500);
-            };
-        }
-
-        // Initialize position and start autoplay after a short delay
-        setTimeout(() => {
-            goToSlide(0, false);
-            startAutoplay();
-        }, 200);
     }
 }
