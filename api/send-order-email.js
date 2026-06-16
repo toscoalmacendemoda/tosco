@@ -58,6 +58,35 @@ module.exports = async (req, res) => {
         `).join('');
 
         // 2. Email Body for Customer
+        const isPickup = order.carrier === 'Retirar en sucursal';
+        const customerIntro = isPickup
+            ? 'Hemos registrado tu pago. A continuación encontrarás el detalle de tu compra. Te enviaremos un correo electrónico cuando tu pedido esté listo para ser retirado en nuestro local comercial.'
+            : 'Hemos registrado tu pago y estamos preparando tu pedido. A continuación encontrarás el detalle de tu compra:';
+
+        const customerDeliveryHtml = isPickup
+            ? `
+                <div style="background-color: #fafbfc; border: 1px solid #eaebed; border-radius: 6px; padding: 15px; margin-top: 20px;">
+                    <h3 style="margin-top: 0; color: #2c3e50; font-size: 14px; border-bottom: 1px solid #eaebed; padding-bottom: 8px;">Datos de Retiro en Sucursal</h3>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Local Comercial:</strong> General Paz 2770, Olavarría, Buenos Aires</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Teléfono:</strong> ${order.customer.phone}</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Método de Entrega:</strong> Retiro en Sucursal (Gratis)</p>
+                    <div style="margin-top: 12px; font-size: 12px; border-top: 1px solid #eaebed; padding-top: 8px; color: #27ae60; line-height: 1.4;">
+                        <strong>Horarios de Atención del Local comercial:</strong><br>
+                        • Lunes - Martes - Miércoles: 9:30hs a 13:30hs<br>
+                        • Jueves - Viernes - Sábado: 9:30hs a 13:00hs y 16:30hs a 19:00hs
+                    </div>
+                </div>
+            `
+            : `
+                <div style="background-color: #fafbfc; border: 1px solid #eaebed; border-radius: 6px; padding: 15px; margin-top: 20px;">
+                    <h3 style="margin-top: 0; color: #2c3e50; font-size: 14px; border-bottom: 1px solid #eaebed; padding-bottom: 8px;">Datos de Entrega</h3>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Dirección:</strong> ${order.customer.address}</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Localidad:</strong> ${order.customer.city}, ${order.customer.state} (${order.customer.zip})</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Teléfono:</strong> ${order.customer.phone}</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Método de Envío:</strong> ${order.carrier}</p>
+                </div>
+            `;
+
         const customerHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #e8e8e8; border-radius: 8px; color: #333;">
                 <div style="text-align: center; border-bottom: 1px solid #eeeeee; padding-bottom: 20px; margin-bottom: 20px;">
@@ -66,7 +95,7 @@ module.exports = async (req, res) => {
                 </div>
                 
                 <p style="font-size: 15px; line-height: 1.5;">Hola <strong>${order.customer.name}</strong>,</p>
-                <p style="font-size: 15px; line-height: 1.5;">Hemos registrado tu pago y estamos preparando tu pedido. A continuación encontrarás el detalle de tu compra:</p>
+                <p style="font-size: 15px; line-height: 1.5;">${customerIntro}</p>
                 
                 <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                     <thead>
@@ -95,13 +124,7 @@ module.exports = async (req, res) => {
                     </tfoot>
                 </table>
 
-                <div style="background-color: #fafbfc; border: 1px solid #eaebed; border-radius: 6px; padding: 15px; margin-top: 20px;">
-                    <h3 style="margin-top: 0; color: #2c3e50; font-size: 14px; border-bottom: 1px solid #eaebed; padding-bottom: 8px;">Datos de Entrega</h3>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>Dirección:</strong> ${order.customer.address}</p>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>Localidad:</strong> ${order.customer.city}, ${order.customer.state} (${order.customer.zip})</p>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>Teléfono:</strong> ${order.customer.phone}</p>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>Método de Envío:</strong> ${order.carrier}</p>
-                </div>
+                ${customerDeliveryHtml}
 
                 <p style="font-size: 13px; color: #7f8c8d; line-height: 1.5; margin-top: 30px; text-align: center;">
                     Cualquier duda o consulta, puedes responder a este correo o escribirnos a nuestro WhatsApp oficial.<br>
@@ -111,6 +134,25 @@ module.exports = async (req, res) => {
         `;
 
         // 3. Email Body for Admin (New Order Notification)
+        const adminDeliveryHtml = isPickup
+            ? `
+                <div style="background-color: #fdf2f2; border: 1px solid #f5c2c2; border-radius: 6px; padding: 15px; margin: 15px 0;">
+                    <h3 style="margin-top: 0; color: #c0392b; font-size: 14px;">Cliente: ${order.customer.name} (Retiro en local)</h3>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Email:</strong> ${order.customer.email}</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Teléfono:</strong> ${order.customer.phone}</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Tipo de Entrega:</strong> Retiro en Sucursal (Olavarría)</p>
+                </div>
+            `
+            : `
+                <div style="background-color: #fdf2f2; border: 1px solid #f5c2c2; border-radius: 6px; padding: 15px; margin: 15px 0;">
+                    <h3 style="margin-top: 0; color: #c0392b; font-size: 14px;">Cliente: ${order.customer.name}</h3>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Email:</strong> ${order.customer.email}</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Teléfono:</strong> ${order.customer.phone}</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Dirección:</strong> ${order.customer.address}, ${order.customer.city} (${order.customer.zip})</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>Método de Envío:</strong> ${order.carrier}</p>
+                </div>
+            `;
+
         const adminHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #c0392b; border-radius: 8px; color: #333;">
                 <div style="text-align: center; border-bottom: 1px solid #eeeeee; padding-bottom: 20px; margin-bottom: 20px;">
@@ -120,12 +162,7 @@ module.exports = async (req, res) => {
                 
                 <p style="font-size: 15px; line-height: 1.5;">Se ha registrado una nueva venta en la tienda online:</p>
                 
-                <div style="background-color: #fdf2f2; border: 1px solid #f5c2c2; border-radius: 6px; padding: 15px; margin: 15px 0;">
-                    <h3 style="margin-top: 0; color: #c0392b; font-size: 14px;">Cliente: ${order.customer.name}</h3>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>Email:</strong> ${order.customer.email}</p>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>Teléfono:</strong> ${order.customer.phone}</p>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>Dirección:</strong> ${order.customer.address}, ${order.customer.city} (${order.customer.zip})</p>
-                </div>
+                ${adminDeliveryHtml}
 
                 <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                     <thead>

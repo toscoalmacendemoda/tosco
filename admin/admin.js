@@ -302,8 +302,22 @@ async function dbGetAllOrders() {
         const response = await fetchWithTimeout('/api/orders');
         if (response.ok) {
             const res = await response.json();
-            res.sort((a, b) => new Date(b.date) - new Date(a.date));
-            return res;
+            const mapped = res.map(o => {
+                if (!o.customer) {
+                    o.customer = {
+                        name: o.customerName || '',
+                        phone: o.customerPhone || '',
+                        email: o.customerEmail || '',
+                        state: o.customerState || '',
+                        city: o.customerCity || '',
+                        address: o.customerAddress || '',
+                        zip: o.customerZip || ''
+                    };
+                }
+                return o;
+            });
+            mapped.sort((a, b) => new Date(b.date) - new Date(a.date));
+            return mapped;
         }
         throw new Error("Failed to fetch orders from API");
     } catch (err) {
@@ -358,10 +372,10 @@ function initApp() {
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const userVal = usernameInput.value.trim().toLowerCase();
+            const userVal = usernameInput.value.trim();
             const passVal = passwordInput.value.trim();
             
-            if (userVal === 'admin' && passVal === 'Mony123') {
+            if (userVal === 'Admin' && passVal === 'Mony123') {
                 sessionStorage.setItem('tosco_admin_logged', 'true');
                 errorMessage.style.display = 'none';
                 showAdminView();
@@ -514,7 +528,7 @@ function setupAdminEventListeners() {
         renderOrdersTable();
     });
 
-    tabAppearanceBtn.addEventListener('click', () => {
+    tabAppearanceBtn.addEventListener('click', async () => {
         tabAppearanceBtn.classList.add('primary');
         tabProductsBtn.classList.remove('primary');
         tabOrdersBtn.classList.remove('primary');
@@ -813,10 +827,15 @@ function renderOrdersTable() {
 
         const itemsSummary = o.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
 
+        const isPickup = o.carrier === 'Retirar en sucursal';
+        const activeLabel = isPickup ? 'Listo para retirar' : 'Despachado';
+        const pendingActionText = isPickup ? 'Listo para retirar' : 'Despachar';
+        const pendingActionIcon = isPickup ? 'fa-store' : 'fa-truck';
+
         let statusBadge = `
             <select class="admin-status-select" onchange="updateOrderStatus(${o.id}, this.value)" style="padding: 6px 10px; border-radius: 4px; border: 1px solid var(--gray-medium); font-weight: bold; font-family: var(--body-font); background-color: ${o.status === 'Pendiente' ? '#fef5e7' : o.status === 'Activo' ? '#ebf5fb' : '#e8f8f5'}; color: ${o.status === 'Pendiente' ? '#d35400' : o.status === 'Activo' ? '#2980b9' : '#27ae60'}; cursor: pointer; outline: none;">
                 <option value="Pendiente" ${o.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                <option value="Activo" ${o.status === 'Activo' ? 'selected' : ''}>Despachado</option>
+                <option value="Activo" ${o.status === 'Activo' ? 'selected' : ''}>${activeLabel}</option>
                 <option value="Completado" ${o.status === 'Completado' ? 'selected' : ''}>Completado</option>
             </select>
         `;
@@ -825,7 +844,7 @@ function renderOrdersTable() {
         if (o.status === 'Pendiente') {
             actionBtnHtml = `
                 <button class="btn-table-action" onclick="printShippingLabel(${o.id})" style="background:#34495e; color:white;"><i class="fa-solid fa-print"></i> Etiqueta</button>
-                <button class="btn-table-action" onclick="updateOrderStatus(${o.id}, 'Activo')" style="background:#2980b9; color:white;"><i class="fa-solid fa-truck"></i> Despachar</button>
+                <button class="btn-table-action" onclick="updateOrderStatus(${o.id}, 'Activo')" style="background:#2980b9; color:white;"><i class="fa-solid ${pendingActionIcon}"></i> ${pendingActionText}</button>
             `;
         } else if (o.status === 'Activo') {
             actionBtnHtml = `
@@ -897,7 +916,11 @@ window.updateOrderStatus = async function(orderId, newStatus) {
         o.status = newStatus;
         await dbPutOrder(o);
         await refreshLocalState();
-        showToast(`Pedido #${orderId} actualizado a ${newStatus === 'Activo' ? 'Despachado' : newStatus}.`, 'success');
+        let statusText = newStatus;
+        if (newStatus === 'Activo') {
+            statusText = o.carrier === 'Retirar en sucursal' ? 'Listo para retirar' : 'Despachado';
+        }
+        showToast(`Pedido #${orderId} actualizado a ${statusText}.`, 'success');
     } catch (err) {
         console.error(err);
         showToast(`Error al actualizar el estado del pedido #${orderId}.`, 'error');
@@ -1260,7 +1283,7 @@ async function dbGetCatalogConfig() {
         const res = await fetchWithTimeout('/api/config?key=catalog');
         if (res.ok) {
             const data = await res.json();
-            if (!data.subcategories || data.subcategories.length < defaultCatalog.subcategories.length) {
+            if (!data.subcategories || !data.brands) {
                 await fetchWithTimeout('/api/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

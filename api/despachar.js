@@ -24,6 +24,14 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Faltan campos requeridos (orderId, customer, carrier).' });
         }
 
+        if (carrier === 'Retirar en sucursal') {
+            return res.status(200).json({
+                success: true,
+                tracking_id: 'RETIRO-LOCAL',
+                label_pdf_url: `print-label.html?orderId=${orderId}`
+            });
+        }
+
         const apiKey = process.env.ENVIOPACK_API_KEY;
 
         // Sandbox/Simulation Mode

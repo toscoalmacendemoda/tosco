@@ -222,19 +222,21 @@
 
         function renderLabel(order) {
             document.title = `Etiqueta Envío - Pedido #${order.id}`;
-            document.getElementById('lbl-carrier-name').innerText = order.carrier || '';
-            document.getElementById('lbl-carrier-type').innerText = order.carrier === 'Andreani' ? 'Express' : 'Estándar';
+            
+            const isPickup = order.carrier === 'Retirar en sucursal';
+            document.getElementById('lbl-carrier-name').innerText = isPickup ? 'RETIRO EN' : (order.carrier || '');
+            document.getElementById('lbl-carrier-type').innerText = isPickup ? 'SUCURSAL' : (order.carrier === 'Andreani' ? 'Express' : 'Estándar');
             
             // Map flat database fields
             document.getElementById('lbl-dest-name').innerText = order.customerName || '';
-            document.getElementById('lbl-dest-address').innerText = order.customerAddress || '';
-            document.getElementById('lbl-dest-city-state').innerText = `${order.customerCity || ''}, ${order.customerState || ''}`;
-            document.getElementById('lbl-dest-zip').innerText = order.customerZip || '';
+            document.getElementById('lbl-dest-address').innerText = isPickup ? 'RETIRO EN LOCAL (OLAVARRÍA)' : (order.customerAddress || '');
+            document.getElementById('lbl-dest-city-state').innerText = isPickup ? 'General Paz 2770, CP 7400' : `${order.customerCity || ''}, ${order.customerState || ''}`;
+            document.getElementById('lbl-dest-zip').innerText = isPickup ? '7400' : (order.customerZip || '');
             document.getElementById('lbl-dest-phone').innerText = order.customerPhone || '';
 
             // Generate tracking code
-            const prefix = order.carrier === 'Andreani' ? 'AND' : 'COR';
-            document.getElementById('lbl-tracking').innerText = `${prefix}-${String(order.id).padStart(6, '0')}-AR`;
+            const prefix = isPickup ? 'RET' : (order.carrier === 'Andreani' ? 'AND' : 'COR');
+            document.getElementById('lbl-tracking').innerText = isPickup ? 'RETIRO-LOCAL' : `${prefix}-${String(order.id).padStart(6, '0')}-AR`;
             
             document.getElementById('lbl-order-id').innerText = `PEDIDO #${order.id}`;
             

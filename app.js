@@ -1025,7 +1025,8 @@ function updateCheckoutTotals() {
     
     // Check if shipping is free (limit $250.000)
     let shippingCost = 0;
-    const selectedCarrier = document.querySelector('input[name="shipping-carrier"]:checked').value;
+    const carrierRadio = document.querySelector('input[name="shipping-carrier"]:checked');
+    const selectedCarrier = carrierRadio ? carrierRadio.value : 'Andreani';
     
     const isFree = subtotal >= 250000;
     const andreaniCost = isFree ? 0 : (apiShippingRates.Andreani || 9500);
@@ -1034,7 +1035,41 @@ function updateCheckoutTotals() {
     document.getElementById('andreani-cost-display').innerText = isFree ? "Gratis" : `$${andreaniCost.toLocaleString('es-AR')}`;
     document.getElementById('correo-cost-display').innerText = isFree ? "Gratis" : `$${correoCost.toLocaleString('es-AR')}`;
 
-    shippingCost = selectedCarrier === 'Andreani' ? andreaniCost : correoCost;
+    if (selectedCarrier === 'Andreani') {
+        shippingCost = andreaniCost;
+    } else if (selectedCarrier === 'Correo Argentino') {
+        shippingCost = correoCost;
+    } else {
+        shippingCost = 0; // Retirar en sucursal
+    }
+
+    // Toggle address fields and pickup info
+    const addressFields = document.getElementById('shipping-address-fields');
+    const pickupInfo = document.getElementById('pickup-info-container');
+    const stateInput = document.getElementById('checkout-state');
+    const cityInput = document.getElementById('checkout-city');
+    const addressInput = document.getElementById('checkout-address');
+    const zipInput = document.getElementById('checkout-zip');
+
+    if (selectedCarrier === 'Retirar en sucursal') {
+        if (addressFields) addressFields.style.display = 'none';
+        if (pickupInfo) pickupInfo.style.display = 'block';
+        
+        // Remove required validation and set placeholders so form validation succeeds and database values remain consistent
+        if (stateInput) { stateInput.removeAttribute('required'); stateInput.value = 'Buenos Aires'; }
+        if (cityInput) { cityInput.removeAttribute('required'); cityInput.value = 'Olavarría'; }
+        if (addressInput) { addressInput.removeAttribute('required'); addressInput.value = 'Retira en local (Olavarría)'; }
+        if (zipInput) { zipInput.removeAttribute('required'); zipInput.value = '7400'; }
+    } else {
+        if (addressFields) addressFields.style.display = 'block';
+        if (pickupInfo) pickupInfo.style.display = 'none';
+        
+        // Restore required validation
+        if (stateInput) { stateInput.setAttribute('required', ''); if (stateInput.value === 'Buenos Aires') stateInput.value = 'Buenos Aires'; }
+        if (cityInput) { cityInput.setAttribute('required', ''); if (cityInput.value === 'Olavarría') cityInput.value = ''; }
+        if (addressInput) { addressInput.setAttribute('required', ''); if (addressInput.value === 'Retira en local (Olavarría)') addressInput.value = ''; }
+        if (zipInput) { zipInput.setAttribute('required', ''); if (zipInput.value === '7400') zipInput.value = ''; }
+    }
 
     checkoutSubtotal.innerText = `$${subtotal.toLocaleString('es-AR')}`;
     checkoutShipping.innerText = shippingCost === 0 ? "Gratis" : `$${shippingCost.toLocaleString('es-AR')}`;
@@ -1078,7 +1113,11 @@ async function completeOrderPlacement(orderData) {
             body: JSON.stringify({ order: orderData })
         }).catch(err => console.error("Error sending order confirmation email:", err));
 
-        alert(`¡Pago acreditado con éxito! Tu pedido #${orderData.id} ha sido registrado. Envío por ${orderData.carrier}.`);
+        if (orderData.carrier === 'Retirar en sucursal') {
+            alert(`¡Pago acreditado con éxito! Tu pedido #${orderData.id} ha sido registrado para retirar en sucursal. Te enviaremos un correo electrónico cuando esté listo.`);
+        } else {
+            alert(`¡Pago acreditado con éxito! Tu pedido #${orderData.id} ha sido registrado. Envío por ${orderData.carrier}.`);
+        }
         
         // Clean cart, session and reload
         cart = [];
@@ -1430,7 +1469,7 @@ async function dbGetCatalogConfig() {
             const res = await fetch('/api/config?key=catalog');
             if (res.ok) {
                 const data = await res.json();
-                if (!data.subcategories || data.subcategories.length < defaultCatalog.subcategories.length) {
+                if (!data.subcategories || !data.brands) {
                     await fetch('/api/config', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
