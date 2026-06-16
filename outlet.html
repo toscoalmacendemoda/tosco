@@ -20,112 +20,41 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* ── OUTLET HERO ── */
-        .outlet-hero {
-            position: relative;
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* ── OUTLET HERO BANNER ── */
+        .outlet-hero-banner {
             width: 100%;
-            min-height: 340px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             overflow: hidden;
-            background: linear-gradient(135deg, #0d0d0d 0%, #1a0505 40%, #3d0808 70%, #0d0d0d 100%);
-        }
-
-        /* Animated noise-grain texture overlay */
-        .outlet-hero::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
-            opacity: 0.4;
-            pointer-events: none;
-        }
-
-        /* Decorative diagonal stripe */
-        .outlet-hero::after {
-            content: '';
-            position: absolute;
-            top: -60px;
-            right: -60px;
-            width: 380px;
-            height: 380px;
-            border: 2px solid rgba(220, 50, 50, 0.18);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .outlet-hero-content {
+            background-color: #f5efe8;
             position: relative;
-            z-index: 2;
-            text-align: center;
-            padding: 60px 20px;
-            max-width: 700px;
         }
 
-        .outlet-hero-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-family: var(--heading-font);
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: #e55;
-            border: 1px solid rgba(220, 50, 50, 0.4);
-            padding: 6px 16px;
-            border-radius: 2px;
-            margin-bottom: 20px;
+        .outlet-banner-img {
+            width: 100%;
+            height: auto;
+            display: block;
         }
 
-        .outlet-hero-title {
-            font-family: var(--heading-font);
-            font-size: clamp(52px, 10vw, 96px);
-            font-weight: 900;
-            color: #ffffff;
-            text-transform: uppercase;
-            letter-spacing: -2px;
-            line-height: 1;
-            margin-bottom: 18px;
+        #view-products-btn-overlay {
+            position: absolute;
+            left: 13.7%;
+            top: 63.6%;
+            width: 18.5%;
+            height: 7.2%;
+            cursor: pointer;
+            display: block;
+            z-index: 10;
+            transition: all 0.3s ease;
         }
 
-        .outlet-hero-title span {
-            color: #e53030;
+        #view-products-btn-overlay:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
         }
-
-        .outlet-hero-sub {
-            font-family: var(--body-font);
-            font-size: 15px;
-            color: rgba(255,255,255,0.55);
-            letter-spacing: 0.5px;
-            margin-bottom: 32px;
-        }
-
-        .outlet-badge-row {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .outlet-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-family: var(--heading-font);
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: #fff;
-            background: rgba(255,255,255,0.07);
-            border: 1px solid rgba(255,255,255,0.12);
-            padding: 8px 16px;
-            border-radius: 2px;
-        }
-
-        .outlet-badge i { color: #e55; }
 
         /* ── BACK LINK ── */
         .outlet-back-bar {
@@ -299,20 +228,10 @@
     </div>
 
     <!-- OUTLET HERO -->
-    <section class="outlet-hero animate-fade">
-        <div class="outlet-hero-content">
-            <div class="outlet-hero-eyebrow">
-                <i class="fa-solid fa-tag"></i> Liquidación de temporada
-            </div>
-            <h1 class="outlet-hero-title">OUT<span>LET</span></h1>
-            <p class="outlet-hero-sub">Los mejores precios del año en marcas premium</p>
-            <div class="outlet-badge-row">
-                <span class="outlet-badge"><i class="fa-solid fa-percent"></i> Hasta 70% OFF</span>
-                <span class="outlet-badge"><i class="fa-solid fa-truck"></i> Envío gratis +$250k</span>
-                <span class="outlet-badge"><i class="fa-solid fa-credit-card"></i> 3 cuotas sin interés</span>
-            </div>
-        </div>
-    </section>
+    <div class="outlet-hero-banner animate-fade">
+        <img src="assets/outlet_banner.jpg" alt="Outlet TOSCO Almacén de Diseño" class="outlet-banner-img">
+        <a href="#outlet-products" id="view-products-btn-overlay" title="Ver Productos"></a>
+    </div>
 
     <!-- BREADCRUMB -->
     <div class="outlet-back-bar">
@@ -322,7 +241,7 @@
     </div>
 
     <!-- PRODUCTS SECTION -->
-    <section class="outlet-products-section animate-fade">
+    <section id="outlet-products" class="outlet-products-section animate-fade">
         <div class="outlet-section-header">
             <h2 class="outlet-section-title">Productos en Oferta</h2>
             <span class="outlet-product-count" id="outlet-count"></span>
