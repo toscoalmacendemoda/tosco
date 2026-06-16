@@ -1169,8 +1169,12 @@ async function handleCheckoutSubmit(e) {
     };
 
     try {
+        const paymentMethodRadio = document.querySelector('input[name="payment-method"]:checked');
+        const paymentMethod = paymentMethodRadio ? paymentMethodRadio.value : 'Mercado Pago';
+        const endpoint = paymentMethod === 'Getnet' ? '/api/create-getnet-payment' : '/api/create-preference';
+
         // Request payment checkout preference from serverless API
-        const response = await fetch('/api/create-preference', {
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1178,7 +1182,8 @@ async function handleCheckoutSubmit(e) {
             body: JSON.stringify({
                 items: orderData.items,
                 shippingCost: orderData.shippingCost,
-                customer: orderData.customer
+                customer: orderData.customer,
+                orderId: orderData.id
             })
         });
 
@@ -1190,6 +1195,7 @@ async function handleCheckoutSubmit(e) {
         const data = await response.json();
         
         if (data && data.success && data.init_point) {
+            orderData.paymentMethod = paymentMethod;
             sessionStorage.setItem('tosco_temp_order', JSON.stringify(orderData));
             window.location.href = data.init_point;
         } else {
@@ -1197,7 +1203,7 @@ async function handleCheckoutSubmit(e) {
         }
     } catch (err) {
         console.error("Error creating payment: ", err);
-        alert("Ocurrió un error al procesar el pago con Mercado Pago.");
+        alert("Ocurrió un error al procesar el pago con la pasarela seleccionada.");
     }
 }
 

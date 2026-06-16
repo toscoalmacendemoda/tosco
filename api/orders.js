@@ -63,7 +63,8 @@ module.exports = async (req, res) => {
                     shippingCost: parseFloat(o.shippingCost) || 0,
                     subtotal: parseFloat(o.subtotal) || 0,
                     total: parseFloat(o.total) || 0,
-                    items: o.items || []
+                    items: o.items || [],
+                    paymentMethod: o.paymentMethod || 'Mercado Pago'
                 }
             });
             return res.status(200).json({
