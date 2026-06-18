@@ -24,6 +24,7 @@ const INITIAL_PRODUCTS = [
 
 // STATE MANAGEMENT
 const isOutletPage = typeof window !== 'undefined' && (window.isOutletPage || window.location.pathname.includes('outlet'));
+const isTerraPage = typeof window !== 'undefined' && (window.isTerraPage || window.location.pathname.includes('terra'));
 
 let db = null;
 let ALL_PRODUCTS = []; // Runtime memory of products
@@ -37,7 +38,7 @@ try {
     console.error("Error loading cart:", e);
 }
 
-let activeCategory = isOutletPage ? 'outlet' : 'all';
+let activeCategory = isOutletPage ? 'outlet' : (isTerraPage ? 'terra' : 'all');
 let activeSubcategory = '';
 let activeBrand = '';
 let activeSearchQuery = '';
@@ -306,7 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await dbInit();
 
         // Handle URL parameters for filters
-        if (!isOutletPage) {
+        if (!isOutletPage && !isTerraPage) {
             const categoryParam = urlParams.get('category');
             const subcategoryParam = urlParams.get('subcategory');
             const brandParam = urlParams.get('brand');
@@ -617,6 +618,12 @@ function renderProducts() {
         if (countEl) {
             countEl.innerText = `${filtered.length} ${filtered.length === 1 ? 'producto' : 'productos'}`;
         }
+    } else if (isTerraPage) {
+        filtered = filtered.filter(p => p.category === 'terra');
+        const countEl = document.getElementById('terra-count');
+        if (countEl) {
+            countEl.innerText = `${filtered.length} ${filtered.length === 1 ? 'producto' : 'productos'}`;
+        }
     } else {
         if (activeCategory !== 'all') {
             filtered = filtered.filter(p => p.category === activeCategory);
@@ -718,6 +725,10 @@ function updateFilterButtonsUI() {
 window.setCatalogFilter = function(category) {
     if (category === 'outlet') {
         window.location.href = '/outlet';
+        return;
+    }
+    if (category === 'terra') {
+        window.location.href = '/terra';
         return;
     }
     activeCategory = category;
@@ -1518,13 +1529,31 @@ async function loadDynamicMenu() {
             navItem.className = 'nav-item';
             
             if (subcats.length > 0) {
-                navItem.innerHTML = `${cat.label} <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>`;
+                if (cat.id === 'terra') {
+                    navItem.innerHTML = `<a href="/terra" style="color:#C05C3E; font-weight:700; text-decoration:none;">${cat.label}</a> <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px; color:#C05C3E;"></i>`;
+                } else {
+                    navItem.innerHTML = `${cat.label} <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 3px;"></i>`;
+                }
                 const dropdown = document.createElement('div');
                 dropdown.className = 'nav-dropdown';
                 subcats.forEach(sub => {
                     const a = document.createElement('a');
-                    if (isOutletPage) {
-                        a.href = `/?subcategory=${sub.value}`;
+                    if (isOutletPage || isTerraPage) {
+                        if (isTerraPage && sub.category === 'terra') {
+                            a.href = '#';
+                            a.onclick = (e) => {
+                                e.preventDefault();
+                                setCatalogSubcategory(sub.value);
+                            };
+                        } else if (isOutletPage && sub.category === 'outlet') {
+                            a.href = '#';
+                            a.onclick = (e) => {
+                                e.preventDefault();
+                                setCatalogSubcategory(sub.value);
+                            };
+                        } else {
+                            a.href = `/?subcategory=${sub.value}`;
+                        }
                     } else {
                         a.href = '#';
                         a.onclick = (e) => {
@@ -1540,8 +1569,10 @@ async function loadDynamicMenu() {
             } else {
                 if (cat.id === 'outlet') {
                     navItem.innerHTML = `<a href="/outlet" style="color:#e53030; font-weight:700; text-decoration:none;">${cat.label}</a>`;
+                } else if (cat.id === 'terra') {
+                    navItem.innerHTML = `<a href="/terra" style="color:#C05C3E; font-weight:700; text-decoration:none;">${cat.label}</a>`;
                 } else {
-                    if (isOutletPage) {
+                    if (isOutletPage || isTerraPage) {
                         navItem.innerHTML = `<a href="/?category=${cat.id}" style="color:inherit; text-decoration:none;">${cat.label}</a>`;
                     } else {
                         navItem.innerHTML = `<a href="#" style="color:inherit; text-decoration:none;">${cat.label}</a>`;
@@ -1563,7 +1594,7 @@ async function loadDynamicMenu() {
         brandsDropdown.className = 'nav-dropdown';
         catalogConfig.brands.forEach(brand => {
             const a = document.createElement('a');
-            if (isOutletPage) {
+            if (isOutletPage || isTerraPage) {
                 a.href = `/?brand=${encodeURIComponent(brand.name)}`;
             } else {
                 a.href = '#';
@@ -1584,14 +1615,14 @@ async function loadDynamicMenu() {
     const mobileMenuContent = document.querySelector('#mobile-menu-drawer .drawer-content');
     if (mobileMenuContent) {
         let mobileHtml = `<ul class="footer-links" style="font-size: 16px; line-height: 2.5;">`;
-        if (isOutletPage) {
+        if (isOutletPage || isTerraPage) {
             mobileHtml += `<li><a href="/">Inicio</a></li>`;
             mobileHtml += `<li><a href="/?category=calzado">Calzado</a></li>`;
             mobileHtml += `<li><a href="/?category=bolsos-y-mochilas">Carteras, Bolsos y Mochilas</a></li>`;
             mobileHtml += `<li><a href="/?category=accesorios">Accesorios</a></li>`;
             mobileHtml += `<li><a href="/?category=indumentaria">Indumentaria</a></li>`;
             mobileHtml += `<li><a href="/?category=gift-cards">Gift Cards</a></li>`;
-            mobileHtml += `<li><a href="/?category=terra">TERRA</a></li>`;
+            mobileHtml += `<li><a href="/terra" style="color:#C05C3E; font-weight:700;">TERRA</a></li>`;
             mobileHtml += `<li><a href="/outlet" style="color:#e53030; font-weight:700;">OUTLET</a></li>`;
         } else {
             mobileHtml += `<li><a href="#" onclick="setCatalogFilter('all'); closeMobileMenu();">Inicio</a></li>`;
@@ -1600,7 +1631,7 @@ async function loadDynamicMenu() {
             mobileHtml += `<li><a href="#" onclick="setCatalogFilter('accesorios'); closeMobileMenu();">Accesorios</a></li>`;
             mobileHtml += `<li><a href="#" onclick="setCatalogFilter('indumentaria'); closeMobileMenu();">Indumentaria</a></li>`;
             mobileHtml += `<li><a href="#" onclick="setCatalogFilter('gift-cards'); closeMobileMenu();">Gift Cards</a></li>`;
-            mobileHtml += `<li><a href="#" onclick="setCatalogFilter('terra'); closeMobileMenu();">TERRA</a></li>`;
+            mobileHtml += `<li><a href="/terra" onclick="closeMobileMenu();" style="color:#C05C3E; font-weight:700;">TERRA</a></li>`;
             mobileHtml += `<li><a href="/outlet" onclick="closeMobileMenu();" style="color:#e53030; font-weight:700;">OUTLET</a></li>`;
         }
         mobileHtml += `</ul>`;
