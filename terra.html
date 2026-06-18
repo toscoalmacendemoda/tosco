@@ -36,9 +36,12 @@
 
         body {
             background-color: var(--terra-sand) !important;
-            background-image: url('assets/green_brush_strokes.png') !important;
-            background-repeat: repeat !important;
-            background-size: 320px !important;
+            background-image: url('assets/single_brush_stroke.png'), url('assets/single_brush_stroke.png') !important;
+            background-repeat: no-repeat, no-repeat !important;
+            background-position: left -180px top 15%, right -180px top 55% !important;
+            background-size: 450px, 450px !important;
+            background-attachment: fixed, fixed !important;
+            background-blend-mode: multiply !important;
             color: var(--terra-black) !important;
         }
 
