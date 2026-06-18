@@ -26,6 +26,8 @@ const INITIAL_PRODUCTS = [
 const isOutletPage = typeof window !== 'undefined' && (window.isOutletPage || window.location.pathname.includes('outlet'));
 const isTerraPage = typeof window !== 'undefined' && (window.isTerraPage || window.location.pathname.includes('terra'));
 
+let GLOBAL_CATALOG_CONFIG = null;
+
 let db = null;
 let ALL_PRODUCTS = []; // Runtime memory of products
 let cart = [];
@@ -350,6 +352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function refreshLocalState() {
+    GLOBAL_CATALOG_CONFIG = null; // Reset config cache to pull fresh config from DB
     ALL_PRODUCTS = await dbGetAllProducts();
     await loadDynamicMenu();
     renderProducts();
@@ -705,6 +708,61 @@ function renderProducts() {
         productsGrid.appendChild(card);
     });
     updateFilterButtonsUI();
+    
+    if (isTerraPage) {
+        renderVisualCategories().catch(e => console.error("Error rendering visual categories:", e));
+    }
+}
+
+async function renderVisualCategories() {
+    const container = document.getElementById('terra-categories-container');
+    if (!container) return;
+
+    const catalogConfig = await dbGetCatalogConfig();
+    const terraSubcats = catalogConfig.subcategories.filter(s => s.category === 'terra');
+
+    container.innerHTML = '';
+
+    // "Todos" circle
+    const allTerraProducts = ALL_PRODUCTS.filter(p => p.category === 'terra' && p.visible !== false && (p.stock === undefined || p.stock > 0));
+    const todosImage = allTerraProducts.length > 0 ? allTerraProducts[0].image : 'assets/logo.webp';
+
+    const todosItem = document.createElement('button');
+    todosItem.className = `terra-cat-item ${!activeSubcategory ? 'active' : ''}`;
+    todosItem.setAttribute('data-all', '');
+    todosItem.onclick = () => setCatalogSubcategory('');
+    todosItem.innerHTML = `
+        <div class="terra-cat-circle">
+            <img src="${todosImage}" alt="Todos" onerror="this.src='assets/logo.webp'">
+        </div>
+        <span class="terra-cat-label">Todos</span>
+    `;
+    container.appendChild(todosItem);
+
+    // Each subcategory circle
+    terraSubcats.forEach(sub => {
+        // Find first product under this subcategory to use as representative image
+        const matchProd = ALL_PRODUCTS.find(p => p.category === 'terra' && p.subcategory === sub.value && p.visible !== false && (p.stock === undefined || p.stock > 0));
+        
+        let fallbackImage = 'assets/logo.webp';
+        if (sub.value === 'sombreros') fallbackImage = 'assets/terra_hat_table.jpg';
+        else if (sub.value === 'velas') fallbackImage = 'assets/terra_logo.jpg';
+        
+        const imageUrl = matchProd ? matchProd.image : fallbackImage;
+        const isActive = activeSubcategory === sub.value;
+
+        const catItem = document.createElement('button');
+        catItem.className = `terra-cat-item ${isActive ? 'active' : ''}`;
+        catItem.setAttribute('data-sub', sub.value);
+        catItem.onclick = () => setCatalogSubcategory(sub.value);
+        catItem.innerHTML = `
+            <div class="terra-cat-circle">
+                <img src="${imageUrl}" alt="${sub.name}" onerror="this.src='assets/logo.webp'">
+            </div>
+            <span class="terra-cat-label">${sub.name}</span>
+        `;
+        container.appendChild(catItem);
+    });
 }
 
 function updateFilterButtonsUI() {
@@ -727,6 +785,16 @@ function updateFilterButtonsUI() {
         if (activeCategory === 'terra' && btn.innerText.toLowerCase().includes('terra')) btn.classList.add('active');
         if (activeCategory === 'gift-cards' && btn.innerText.toLowerCase().includes('gift')) btn.classList.add('active');
         if (activeCategory === 'outlet' && btn.innerText.toLowerCase().includes('outlet')) btn.classList.add('active');
+    });
+
+    document.querySelectorAll('.terra-cat-item').forEach(item => {
+        item.classList.remove('active');
+        const sub = item.getAttribute('data-sub');
+        if (sub) {
+            if (activeSubcategory === sub) item.classList.add('active');
+        } else if (!activeSubcategory && item.getAttribute('data-all') !== null) {
+            item.classList.add('active');
+        }
     });
 }
 
@@ -1490,6 +1558,10 @@ async function dbGetCatalogConfig() {
         ]
     };
 
+    if (GLOBAL_CATALOG_CONFIG) {
+        return GLOBAL_CATALOG_CONFIG;
+    }
+
     if (isUsingAPI) {
         try {
             const res = await fetch('/api/config?key=catalog');
@@ -1501,8 +1573,10 @@ async function dbGetCatalogConfig() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ key: 'catalog', data: defaultCatalog })
                     });
+                    GLOBAL_CATALOG_CONFIG = defaultCatalog;
                     return defaultCatalog;
                 }
+                GLOBAL_CATALOG_CONFIG = data;
                 return data;
             }
         } catch (e) {
@@ -1510,6 +1584,7 @@ async function dbGetCatalogConfig() {
         }
     }
     
+    GLOBAL_CATALOG_CONFIG = defaultCatalog;
     return defaultCatalog;
 }
 
