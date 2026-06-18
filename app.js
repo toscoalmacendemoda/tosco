@@ -710,6 +710,15 @@ function renderProducts() {
 function updateFilterButtonsUI() {
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
+        if (isTerraPage) {
+            const btnSub = btn.getAttribute('data-sub');
+            if (btnSub) {
+                if (activeSubcategory === btnSub) btn.classList.add('active');
+            } else if (!activeSubcategory && btn.getAttribute('data-all') !== null) {
+                btn.classList.add('active');
+            }
+            return;
+        }
         if (activeCategory === 'all' && btn.innerText.toLowerCase().includes('todos')) btn.classList.add('active');
         if (activeCategory === 'calzado' && btn.innerText.toLowerCase().includes('calzado')) btn.classList.add('active');
         if (activeCategory === 'bolsos-y-mochilas' && btn.innerText.toLowerCase().includes('bolsos')) btn.classList.add('active');

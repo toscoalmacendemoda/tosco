@@ -533,10 +533,10 @@
     <!-- ── HERO SECTION ── -->
     <section class="terra-hero">
         <div class="terra-hero-content">
-            <span class="terra-hero-subtitle">Nueva Colección Cápsula</span>
-            <h1 class="terra-hero-title">Estética Resort & Boho Lujo</h1>
+            <span class="terra-hero-subtitle">Nueva Colección</span>
+            <h1 class="terra-hero-title">Colección Terra</h1>
             <p class="terra-hero-description">
-                Un viaje sensorial a través de fibras naturales, acabados artesanales y el espíritu cálido del verano eterno. Piezas exclusivas diseñadas con alma y autenticidad.
+                Fibras naturales, sombreros artesanales y detalles que inspiran. Creados para acompañar tus momentos especiales.
             </p>
             <a href="#catalog-section" class="btn-terra">Explorar Colección</a>
         </div>
@@ -557,13 +557,13 @@
                 <img src="assets/terra_logo.jpg" alt="TERRA de la tierra a tu esencia" class="collection-featured-logo">
             </div>
             <div class="collection-featured-text">
-                <span class="collection-section-tag">El Origen</span>
-                <h2 class="collection-featured-title">De la tierra a tu esencia</h2>
-                <p class="collection-featured-desc">
-                    TERRA nace del encuentro entre la naturaleza viva y la maestría artesanal. Una línea exclusiva de accesorios, sombreros y detalles de lifestyle concebida para quienes buscan conectar con lo natural.
+                <span class="collection-section-tag">Bienvenidos</span>
+                <h2 class="collection-featured-title">Bienvenidos a Terra ✨</h2>
+                <p class="collection-featured-desc" style="font-size: 18px; font-weight: 400; color: var(--terra-terracotta); margin-bottom: 15px;">
+                    Un universo de objetos que inspiran.
                 </p>
                 <p class="collection-featured-desc">
-                    Inspirada en los tonos terracota de la arcilla, el beige de las arenas mediterráneas y el aroma silvestre de la lavanda, cada pieza es una celebración de lo orgánico y lo contemporáneo.
+                    Sombreros intervenidos a mano, joyería con piedras naturales, velas artesanales y aromas para el hogar, creados para acompañar tus momentos y hacerlos especiales.
                 </p>
             </div>
         </div>
@@ -573,13 +573,10 @@
     <section class="materials-section">
         <div class="materials-inner">
             <div class="materials-text">
-                <span class="collection-section-tag">Los Detalles</span>
-                <h2 class="collection-featured-title">Fibras Naturales y Texturas con Alma</h2>
+                <span class="collection-section-tag">Artesanal</span>
+                <h2 class="collection-featured-title">Fibras Naturales y Texturas</h2>
                 <p class="collection-featured-desc">
-                    Nuestras piezas están modeladas a mano utilizando rafia de yute seleccionada, cordones trenzados de algodón y cuero genuino con tratamiento vegetal. 
-                </p>
-                <p class="collection-featured-desc">
-                    Los flecos deshilachados, los apliques de tachas metálicas plateadas, los pompones tejidos y los dijes protectores añaden capas de texturas tridimensionales y simbolismo. La artesanía contemporánea se siente en cada costura.
+                    Cada una de nuestras piezas está modelada a mano utilizando rafia de yute, hilos de algodón y cuero genuino. La delicadeza de los flecos deshilachados, tachas y apliques hechos con dedicación.
                 </p>
             </div>
             <div class="materials-image-wrapper">
@@ -595,6 +592,20 @@
             <span class="terra-products-count" id="terra-count">Cargando productos...</span>
         </div>
         <div class="products-container">
+            <!-- Subcategory Filters -->
+            <div class="catalog-filter" style="margin-bottom: 40px; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
+                <button class="filter-btn active" data-all onclick="setCatalogSubcategory('')">Todos</button>
+                <button class="filter-btn" data-sub="aromatica" onclick="setCatalogSubcategory('aromatica')">Aromática</button>
+                <button class="filter-btn" data-sub="aros" onclick="setCatalogSubcategory('aros')">Aros</button>
+                <button class="filter-btn" data-sub="collares" onclick="setCatalogSubcategory('collares')">Collares</button>
+                <button class="filter-btn" data-sub="mates" onclick="setCatalogSubcategory('mates')">Mates</button>
+                <button class="filter-btn" data-sub="panuelos" onclick="setCatalogSubcategory('panuelos')">Pañuelos</button>
+                <button class="filter-btn" data-sub="pulseras" onclick="setCatalogSubcategory('pulseras')">Pulseras</button>
+                <button class="filter-btn" data-sub="sombreros" onclick="setCatalogSubcategory('sombreros')">Sombreros</button>
+                <button class="filter-btn" data-sub="velas" onclick="setCatalogSubcategory('velas')">Velas</button>
+                <button class="filter-btn" data-sub="box-para-regalar" onclick="setCatalogSubcategory('box-para-regalar')">Box para regalar</button>
+            </div>
+            
             <div class="products-grid" id="products-grid">
                 <!-- Dynamically populated via app.js -->
             </div>
@@ -605,7 +616,7 @@
     <section class="terra-section inspiration-section">
         <div class="inspiration-header">
             <h2 class="inspiration-title">Inspiración TERRA</h2>
-            <span class="inspiration-subtitle">Moda consciente, espíritu errante</span>
+            <span class="inspiration-subtitle">Espíritu libre y natural</span>
         </div>
         <div class="inspiration-grid">
             <div class="inspiration-card-large">
@@ -613,7 +624,7 @@
             </div>
             <div class="inspiration-card-text">
                 <blockquote class="inspiration-quote">
-                    "Habitar el lujo relajado. Sentir la textura de lo hecho a mano. Volver al origen, al aroma de las cosas simples, a un verano infinito que late en nuestro interior."
+                    "Volver al origen, a la calidez de lo hecho a mano y a la belleza de lo auténtico."
                 </blockquote>
                 <span class="inspiration-author">TERRA Lifestyle</span>
             </div>
